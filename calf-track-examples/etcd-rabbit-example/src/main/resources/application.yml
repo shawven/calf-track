@@ -1,0 +1,31 @@
+server:
+  port: 8885
+
+target-host: localhost
+
+spring:
+  redis:
+    host: ${target-host}
+    redisson:
+      file: classpath:redisson.yml
+
+  rabbitmq:
+    apiUrl: http://${target-host}:15672/api/
+    host: ${target-host}
+    port: 5672
+    username: user
+    password: bitnami
+
+calf-track:
+  root: calf
+  etcd:
+    url: http://${target-host}:2379
+  zookeeper:
+    url: ${target-host}:2181
+
+
+#自动注册客户端(服务端的地址)
+databaseEventServerUrl: http://localhost:8885/client/addAll
+appName: etcd-rabbit
+
+#debug: true
