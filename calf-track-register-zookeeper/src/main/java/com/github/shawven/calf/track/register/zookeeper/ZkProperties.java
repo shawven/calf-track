@@ -10,7 +10,7 @@ import java.util.List;
  * @date 2023-01-05
  */
 @Data
-@ConfigurationProperties("calf-track.zookeeper")
+@ConfigurationProperties("track.zookeeper")
 public class ZkProperties {
 
     private String url;

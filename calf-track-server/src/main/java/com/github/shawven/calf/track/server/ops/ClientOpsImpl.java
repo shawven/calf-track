@@ -7,14 +7,14 @@ import com.github.shawven.calf.track.datasource.api.ops.ClientOps;
 import com.github.shawven.calf.track.datasource.api.ops.DataSourceCfgOps;
 import com.github.shawven.calf.track.register.Emitter;
 import com.github.shawven.calf.track.register.PathKey;
+import com.github.shawven.calf.track.register.Repository;
 import com.github.shawven.calf.track.register.domain.ClientInfo;
 import com.github.shawven.calf.track.register.domain.DataSourceCfg;
-import com.github.shawven.calf.track.register.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -36,81 +36,56 @@ public class ClientOpsImpl implements ClientOps {
     }
 
     @Override
-    public List<ClientInfo> listConsumerClient(DataSourceCfg dataSourceCfg) {
-        String namespace = dataSourceCfg.getNamespace();
-        String binLogClientSetStr = repository.get(joinKey(namespace));
-
-        if(!StringUtils.hasText(binLogClientSetStr)) {
-            return new ArrayList<>();
-        }
-        return JSON.parseArray(binLogClientSetStr, ClientInfo.class);
-    }
-
-    @Override
-    public List<ClientInfo> listConsumerClient(String queryType) {
-        return dataSourceCfgOps.listCfgs().stream()
-                .map(config -> repository.get(joinKey(config.getNamespace())))
-                .map(str -> {
-                    List<ClientInfo> clientInfos = JSON.parseArray(str, ClientInfo.class);
-                    return clientInfos == null ? new ArrayList<ClientInfo>() : clientInfos;
-                })
-                .flatMap(List::stream)
-                .filter(clientInfo -> queryType == null || queryType.equals(clientInfo.getQueueType()))
-                .sorted(Comparator.comparing(ClientInfo::getNamespace))
+    public List<ClientInfo> listConsumerClientsByNamespaceAndName(String namespace, String name) {
+        List<String> strings = repository.listTree(clientKey(namespace));
+        return strings.stream()
+                .map(str -> JSON.parseObject(str, ClientInfo.class))
+                .filter(clientInfo -> Objects.equals(clientInfo.getDsName(), name))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<ClientInfo> listConsumerClientsByKey(String clientInfoKey) {
-        List<ClientInfo> clientInfos = listConsumerClient((String) null);
-        if(clientInfos == null || clientInfos.isEmpty()) {
-            return clientInfos;
-        }
-
-        return clientInfos
-                .stream()
-                .filter(clientInfo -> clientInfo.getKey().equals(clientInfoKey))
+    public List<ClientInfo> listConsumerClientsByNamespaceAndQueueType(String namespace, String queueType) {
+        return  repository.listTree(clientKey(namespace)).stream()
+                .map(str -> JSON.parseObject(str, ClientInfo.class))
+                .filter(clientInfo -> queueType == null || queueType.equals(clientInfo.getQueueType()))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public void addConsumerClient(ClientInfo clientInfo) {
-        String namespace = clientInfo.getNamespace();
-        DataSourceCfg config = dataSourceCfgOps.getByNamespace(namespace);
-        if (config == null) {
-            throw new RuntimeException("not exist namespace: " + namespace);
-        }
-        String metaData = repository.get(joinKey(namespace));
+    public List<ClientInfo> listConsumerClientsByKey(String namespace, String key) {
+        return repository.listTree(clientKey(namespace)).stream()
+                .map(str -> JSON.parseObject(str, ClientInfo.class))
+                .filter(clientInfo -> Objects.equals(key, clientInfo.getKey()))
+                .collect(Collectors.toList());
+    }
 
-        Set<ClientInfo> clientSet = null;
-        if(!StringUtils.hasText(metaData)) {
-            clientSet = new HashSet<>();
-        } else {
-            List<ClientInfo> clientList = JSON.parseArray(metaData, ClientInfo.class);
-            clientSet = new HashSet<>(clientList);
+    @Override
+    public void addConsumerClient(String namespace, ClientInfo clientInfo) {
+        if (!dataSourceCfgOps.listNames(namespace).contains(clientInfo.getDsName())) {
+            throw new RuntimeException(String.format("namespace: %s not exist dataSource: %s",
+                    namespace, clientInfo.getDsName()));
         }
-        clientSet.add(clientInfo);
-        repository.set(joinKey(namespace), JSON.toJSONString(clientSet));
+
+        String name = clientInfo.getName();
+        if (name == null) {
+            clientInfo.setName(System.currentTimeMillis() + "");
+        } else if (repository.get(clientKey(namespace, name)) != null) {
+            throw new RuntimeException(String.format("namespace: %s exist client : %s",
+                    namespace, name));
+        }
+
+        repository.set(clientKey(namespace, name), JSON.toJSONString(clientInfo));
 
         logger.info("addConsumerClient success namespace:{} client: {}", namespace, clientInfo);
     }
 
     @Override
-    public void removeConsumerClient(List<ClientInfo> clientInfos) {
-        Map<String, List<ClientInfo>> clientMap = clientInfos.stream().collect(Collectors.groupingBy(ClientInfo::getNamespace));
-        clientMap.forEach((namespace, clientList) -> {
-
-            DataSourceCfg config = dataSourceCfgOps.getByNamespace(namespace);
-            String metaData = repository.get(joinKey(namespace));
-            if(StringUtils.hasText(metaData)) {
-                List<ClientInfo> currentList = JSON.parseArray(metaData, ClientInfo.class);
-                Set<ClientInfo> clientSet = new HashSet<>(currentList);
-                clientList.forEach(clientSet::remove);
-                repository.set(joinKey(namespace), JSON.toJSONString(clientSet));
-
-                logger.info("removeConsumerClient success namespace:{} clients: {}", namespace, currentList);
-            }
-        });
+    public void removeConsumerClient(String namespace, List<ClientInfo> clientInfos) {
+        for (ClientInfo clientInfo : clientInfos) {
+            repository.del(clientKey(namespace, clientInfo.getName()));
+        }
+        logger.info("removeConsumerClient success namespace:{} clients: {}", namespace, clientInfos);
     }
 
     @Override
@@ -121,12 +96,14 @@ public class ClientOpsImpl implements ClientOps {
 
 
     @Override
-    public void watcherClientInfo(DataSourceCfg dataSourceCfg, Consumer<List<ClientInfo>> consumer) {
-        repository.watch(joinKey(dataSourceCfg.getNamespace()), new Emitter<String>() {
+    public void watcherClientInfo(DataSourceCfg cfg, Consumer<List<ClientInfo>> consumer) {
+        repository.watch(clientKey(cfg.getNamespace()), new Emitter<String>() {
             @Override
             public void onNext(String value) {
-                List<ClientInfo> clientInfos = JSON.parseArray(value, ClientInfo.class);
-                consumer.accept(clientInfos);
+                List<ClientInfo> list = JSON.parseArray(value, ClientInfo.class).stream()
+                        .filter(clientInfo -> Objects.equals(clientInfo.getDsName(), cfg.getName()))
+                        .collect(Collectors.toList());
+                consumer.accept(list);
             }
 
             @Override
@@ -141,7 +118,11 @@ public class ClientOpsImpl implements ClientOps {
         });
     }
 
-    private String joinKey(String namespace) {
-        return PathKey.concat(namespace, Const.CLIENT_SET_KEY);
+    private String clientKey(String namespace) {
+        return PathKey.concat(Const.CLIENT_SET_KEY, namespace);
+    }
+
+    private String clientKey(String namespace, String name) {
+        return PathKey.concat(Const.CLIENT_SET_KEY, namespace, name);
     }
 }

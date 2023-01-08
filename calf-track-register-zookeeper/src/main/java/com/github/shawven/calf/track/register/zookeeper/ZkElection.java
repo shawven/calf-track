@@ -36,7 +36,7 @@ class ZkElection implements Election {
 
     public ZkElection(CuratorFramework client, String path, String name,
                       Long ttl, boolean requeue, ElectionListener listener) {
-        this.name = name != null ? name : UUID.randomUUID().toString();
+        this.name = name;
         this.requeue = requeue;
         this.listener = listener;
         this.leaderLatch = new LeaderLatch(client, path, this.name);

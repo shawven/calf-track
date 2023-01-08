@@ -10,9 +10,9 @@ import lombok.Data;
 public class DataSourceCfg {
 
     /**
-     * 唯一标识
+     * 名称
      */
-    private String id;
+    private String name;
 
     /**
      * 命名空间

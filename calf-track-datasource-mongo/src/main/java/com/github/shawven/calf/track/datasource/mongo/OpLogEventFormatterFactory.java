@@ -14,10 +14,10 @@ public class OpLogEventFormatterFactory {
 
     private final OpLogEventFormatter defaultEventFormatter;
 
-    public OpLogEventFormatterFactory(String namespace) {
-        this.writeEventFormatter = new OpLogEventFormatter.Write(namespace);
-        this.updateEventFormatter = new OpLogEventFormatter.Update(namespace);
-        this.deleteEventFormatter = new OpLogEventFormatter.Delete(namespace);
+    public OpLogEventFormatterFactory(String name) {
+        this.writeEventFormatter = new OpLogEventFormatter.Write(name);
+        this.updateEventFormatter = new OpLogEventFormatter.Update(name);
+        this.deleteEventFormatter = new OpLogEventFormatter.Delete(name);
 
         this.defaultEventFormatter = event -> null;
     }

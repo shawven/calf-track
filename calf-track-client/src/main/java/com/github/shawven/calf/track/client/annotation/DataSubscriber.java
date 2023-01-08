@@ -14,7 +14,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DataSubscriber {
 
-    String namespace() default Const.DEFAULT_NAMESPACE;
+    String name() default Const.NAMESPACE;
 
     String database();
 

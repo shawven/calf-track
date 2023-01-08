@@ -16,8 +16,7 @@ spring:
     username: user
     password: bitnami
 
-calf-track:
-  root: calf
+track:
   etcd:
     url: http://${target-host}:2379
   zookeeper:
@@ -26,6 +25,6 @@ calf-track:
 
 #自动注册客户端(服务端的地址)
 databaseEventServerUrl: http://localhost:8885/client/addAll
-appName: etcd-rabbit
+appName: etcd-rabbit-example
 
 #debug: true

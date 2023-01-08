@@ -9,7 +9,6 @@ import com.github.shawven.calf.track.datasource.api.domain.DataErrorMsg;
 import com.github.shawven.calf.track.datasource.api.ops.ClientOps;
 import com.github.shawven.calf.track.datasource.api.ops.StatusOps;
 import com.github.shawven.calf.track.register.domain.ClientInfo;
-import com.github.shawven.calf.track.datasource.api.ops.DataSourceCfgOps;
 import com.github.shawven.calf.track.server.publisher.rabbit.RabbitService;
 import com.rabbitmq.http.client.domain.QueueInfo;
 import org.redisson.api.RMap;
@@ -35,9 +34,6 @@ public class ClientServiceImpl implements ClientService {
     private RabbitService rabbitService;
 
     @Autowired
-    private DataSourceCfgOps dataSourceCfgOps;
-
-    @Autowired
     private ClientOps clientOps;
 
     @Autowired
@@ -50,27 +46,25 @@ public class ClientServiceImpl implements ClientService {
 //    private KafkaService kafkaService;
 
     @Override
-    public void addClient(ClientInfo clientInfo, Integer partitions, Integer replication) {
+    public void addClient(String namespace, ClientInfo clientInfo, Integer partitions, Integer replication) {
 
-        clientOps.addConsumerClient(clientInfo);
+        clientOps.addConsumerClient(namespace, clientInfo);
 
-        if(Const.QUEUE_TYPE_KAFKA.equals(clientInfo.getQueueType())){
+        if (Const.QUEUE_TYPE_KAFKA.equals(clientInfo.getQueueType())) {
 //            kafkaService.createKafkaTopic(clientInfo, partitions, replication);
         }
 
     }
 
     @Override
-    public List<ClientInfo> listClient(String queryType) {
-
-        return clientOps.listConsumerClient(queryType);
+    public List<ClientInfo> listClient(String namespace, String queryType) {
+        return clientOps.listConsumerClientsByNamespaceAndQueueType(namespace, queryType);
     }
 
     @Override
-    public Map<String, List<ClientInfo>> listClientMap() {
-
-        List<ClientInfo> clientInfos = listClient(null);
-        if(clientInfos == null || clientInfos.isEmpty()) {
+    public Map<String, List<ClientInfo>> listClientMap(String namespace) {
+        List<ClientInfo> clientInfos = listClient(namespace, null);
+        if (clientInfos == null || clientInfos.isEmpty()) {
             return new HashMap<>();
         } else {
             return clientInfos.stream().collect(Collectors.groupingBy(ClientInfo::getKey));
@@ -78,107 +72,104 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public List<String> listErrorClient() {
+    public List<String> listErrorClient(String namespace) {
 
-        List<String> clientList=new ArrayList();
+        List<String> clientList = new ArrayList();
         Iterable<String> keys = redissonClient.getKeys().getKeysByPattern(Const.REDIS_PREFIX.concat("BIN-LOG-ERR-MAP-*"));
-        keys.forEach(key->{
+        keys.forEach(key -> {
             clientList.add(key);
         });
         return clientList;
     }
 
     @Override
-    public void deleteClient(ClientInfo clientInfo) {
-        clientOps.removeConsumerClient(Collections.singletonList(clientInfo));
+    public void deleteClient(String namespace, ClientInfo clientInfo) {
+        clientOps.removeConsumerClient(namespace, Collections.singletonList(clientInfo));
     }
 
     @Override
-    public String getLogStatus() {
-        return JSONArray.toJSONString(statusOps.listStatus());
+    public String getLogStatus(String namespace) {
+        return JSONArray.toJSONString(statusOps.listStatus(namespace));
     }
 
     @Override
-    public String getqueuesize(String clientName,String type,int page) {
-        int repage=10*(page-1);
+    public String getqueuesize(String namespace, String clientName, String type, int page) {
+        int repage = 10 * (page - 1);
 
         JSONObject object = new JSONObject();
         String ClientId;
         if (Const.QUEUE_TYPE_REDIS.equals(type)) {
-                ClientId="BIN-LOG-DATA-".concat(clientName);
-                object.put("queueSize",redissonClient.getList(ClientId).size());
-                object.put("queue",redissonClient.getList(ClientId)
-                        .get(repage,repage+1,repage+2,repage+3,repage +4,repage+5,repage+6,repage+7,repage+8,repage+9));
-                return object.toJSONString();
+            ClientId = "BIN-LOG-DATA-" + namespace + "-".concat(clientName);
+            object.put("queueSize", redissonClient.getList(ClientId).size());
+            object.put("queue", redissonClient.getList(ClientId)
+                    .get(repage, repage + 1, repage + 2, repage + 3, repage + 4, repage + 5, repage + 6, repage + 7, repage + 8, repage + 9));
+            return object.toJSONString();
         } else if (Const.QUEUE_TYPE_RABBIT.equals(type)) {
-                ClientId="BIN-LOG-DATA-".concat(clientName);
-                QueueInfo queueInfo = rabbitService.getQueue(ClientId);
-                if (queueInfo == null || 0 == queueInfo.getMessagesReady()) {
-                    object.put("queueSize", 0);
-                    object.put("queue", new ArrayList<>());
-                    return object.toJSONString();
-                } else {
-                    long queueSize = queueInfo.getMessagesReady();
-                    long count = (repage + 10) > queueSize ? queueSize : (repage + 10);
-                    List<BaseRows> list = rabbitService.getMessageList(ClientId, count);
-                    list = list.subList(repage, list.size());
-                    object.put("queueSize", queueSize);
-                    object.put("queue", list);
-                    return object.toJSONString();
-                }
+            ClientId = "BIN-LOG-DATA-" + namespace + "-".concat(clientName);
+            QueueInfo queueInfo = rabbitService.getQueue(ClientId);
+            if (queueInfo == null || 0 == queueInfo.getMessagesReady()) {
+                object.put("queueSize", 0);
+                object.put("queue", new ArrayList<>());
+                return object.toJSONString();
+            } else {
+                long queueSize = queueInfo.getMessagesReady();
+                long count = (repage + 10) > queueSize ? queueSize : (repage + 10);
+                List<BaseRows> list = rabbitService.getMessageList(ClientId, count);
+                list = list.subList(repage, list.size());
+                object.put("queueSize", queueSize);
+                object.put("queue", list);
+                return object.toJSONString();
+            }
         } else if (Const.QUEUE_TYPE_KAFKA.equals(type)) {
 
-                // TODO 增加Kafka队列查询
-                object.put("queueSize", 0);
-                object.put("queue",new ArrayList<>());
-                return object.toJSONString();
+            // TODO 增加Kafka队列查询
+            object.put("queueSize", 0);
+            object.put("queue", new ArrayList<>());
+            return object.toJSONString();
 
         } else {
-                ClientId=clientName;
-                object.put("queueSize",redissonClient.getMap(ClientId).size());
-                RMap<String, JSONObject> map = redissonClient.getMap(ClientId,new TypedJsonJacksonCodec(String.class,JSONObject.class));
-                Collection<JSONObject> values = map.values();
-                JSONArray array1 = new JSONArray();
-                array1.addAll(values);
-                object.put("queue",array1);
-                return object.toJSONString();
+            ClientId =  namespace + "-" + clientName;
+            object.put("queueSize", redissonClient.getMap(ClientId).size());
+            RMap<String, JSONObject> map = redissonClient.getMap(ClientId,
+                    new TypedJsonJacksonCodec(String.class, JSONObject.class));
+            Collection<JSONObject> values = map.values();
+            JSONArray array1 = new JSONArray();
+            array1.addAll(values);
+            object.put("queue", array1);
+            return object.toJSONString();
         }
     }
 
     @Override
-    public boolean deleteFromQueue(String uuid,String errClient) {
-        RMap<String, DataErrorMsg> map = redissonClient.getMap(errClient, new TypedJsonJacksonCodec(String.class, DataErrorMsg.class));
+    public boolean deleteFromQueue(String namespace, String uuid, String errClient) {
+        RMap<String, DataErrorMsg> map = redissonClient.getMap(namespace + "-" + errClient,
+                new TypedJsonJacksonCodec(String.class, DataErrorMsg.class));
         map.remove(uuid);
         return true;
     }
 
     @Override
-    public List<String> listNamespace() {
-        return dataSourceCfgOps.getNamespaceList();
-    }
-
-    @Override
-    public Result deleteTopic(String clientInfoKey) {
-        List<ClientInfo> clientInfos = clientOps.listConsumerClientsByKey(clientInfoKey);
+    public Result deleteTopic(String namespace, String clientInfoKey) {
+        List<ClientInfo> clientInfos = clientOps.listConsumerClientsByKey(namespace, clientInfoKey);
 
         // 从EventHandler的发送列表中删除
-        clientOps.removeConsumerClient(clientInfos);
+        clientOps.removeConsumerClient(namespace, clientInfos);
 
         // 刪除对应队列中的topic
         Set<String> clientInfoSet = new HashSet<>();
         Iterator<ClientInfo> iterator = clientInfos.iterator();
-        while(iterator.hasNext()) {
+        while (iterator.hasNext()) {
             ClientInfo clientInfo = iterator.next();
             String identify = clientInfo.getQueueType() + clientInfo.getKey();
-            if(!clientInfoSet.add(identify)) {
+            if (!clientInfoSet.add(identify)) {
                 iterator.remove();
             }
         }
 
-        int deleteSum =clientInfos.size();
+        int deleteSum = clientInfos.size();
 
         int successCount = 0;
-        for(ClientInfo clientInfo : clientInfos) {
+        for (ClientInfo clientInfo : clientInfos) {
             // todo destroy
 //           if (dataPublisher.destroy(clientInfo)) {
 //               successCount ++;

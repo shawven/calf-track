@@ -5,7 +5,7 @@ import com.github.shawven.calf.track.datasource.api.ops.ClientOps;
 import com.github.shawven.calf.track.datasource.api.ops.DataSourceCfgOps;
 import com.github.shawven.calf.track.datasource.api.ops.StatusOps;
 import com.github.shawven.calf.track.register.domain.DataSourceCfg;
-import com.github.shawven.calf.track.register.domain.InstanceStatus;
+import com.github.shawven.calf.track.register.domain.ServerStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,15 +23,19 @@ public class DataSourceServiceImpl implements DataSourceService {
     @Autowired
     private ClientOps clientOps;
 
-
     @Override
-    public List<DataSourceCfg> listCfgs() {
-        return dataSourceCfgOps.listCfgs();
+    public List<ServerStatus> getServiceStatus() {
+        return statusOps.getServerStatus();
     }
 
     @Override
-    public List<InstanceStatus> getServiceStatus() {
-        return statusOps.getInstanceStatus();
+    public List<DataSourceCfg> listCfgs(String namespace) {
+        return dataSourceCfgOps.list(namespace);
+    }
+
+    @Override
+    public List<String> listNames(String namespace) {
+        return dataSourceCfgOps.listNames(namespace);
     }
 
     @Override
@@ -45,21 +49,21 @@ public class DataSourceServiceImpl implements DataSourceService {
     }
 
     @Override
-    public boolean removeDatasourceConfig(String namespace) {
-        return dataSourceCfgOps.remove(namespace);
+    public boolean removeDatasourceConfig(String namespace, String name) {
+        return dataSourceCfgOps.remove(namespace, name);
     }
 
 
     @Override
-    public boolean startDatasource(String namespace, String delegatedIp) {
-        Command command = new Command(namespace, delegatedIp, Command.Type.START);
+    public boolean startDatasource(String namespace, String name, String ip) {
+        Command command = new Command(namespace, name, Command.Type.START);
         return clientOps.sendCommand(command);
     }
 
 
     @Override
-    public boolean stopDatasource(String namespace) {
-        Command command = new Command(namespace, Command.Type.STOP);
+    public boolean stopDatasource(String namespace, String name) {
+        Command command = new Command(namespace, name, Command.Type.STOP);
         return clientOps.sendCommand(command);
     }
 }

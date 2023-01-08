@@ -10,8 +10,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author xw
@@ -38,73 +39,87 @@ public abstract class AbstractTrackServer implements TrackServer {
 
     @Override
     public void start() {
-        // 1. 获得初始配置信息
-        List<DataSourceCfg> configList = dataSourceCfgOps.getByDataSourceType(dataSourceType());
-
-        // 2. 竞争每个数据源的Leader
-        configList.forEach(config -> {
-            // 在线程中启动事件监听
-            if(config.isActive()) {
-                doStart(config);
+        // 1. 获得初始配置信息, 根据config开启数据源
+        Map<String, List<DataSourceCfg>> namespaceMap = dataSourceCfgOps.getNamespaceMapByType(dataSourceType());
+        namespaceMap.forEach((namespace, cfgs) -> {
+            if (cfgs.isEmpty()) {
+                return;
+            }
+            for (DataSourceCfg cfg : cfgs) {
+                // 在线程中启动事件监听
+                if(cfg.isActive()) {
+                    doStart(cfg);
+                    logger.info("successfully started namespace:{} name:{}", namespace, cfg.getName());
+                }
             }
         });
 
-        // 3. 注册数据源Config 命令Watcher
+        // 2. 注册数据源Config 命令Watcher
         dataSourceCfgOps.registerServerWatcher(new ServerWatcherImpl());
 
-        // 4. 服务节点上报
-        updateInstanceStatus();
+        // 3. 服务节点上报
+        updateServerStatus();
+    }
+
+    @Override
+    public void stop() {
+        // 1. 获得初始配置信息,根据config关闭数据源
+        Map<String, List<DataSourceCfg>> namespaceMap = dataSourceCfgOps.getNamespaceMapByType(dataSourceType());
+        namespaceMap.forEach((namespace, cfgs) -> {
+            if (cfgs.isEmpty()) {
+                return;
+            }
+            for (DataSourceCfg cfg : cfgs) {
+                doStop(namespace, cfg.getName());
+                logger.info("successfully stopped namespace:{} name:{}", namespace, cfg.getName());
+            }
+        });
     }
 
     protected abstract void doStart(DataSourceCfg config);
 
-    protected abstract void updateInstanceStatus();
+    protected abstract void doStop(String namespace, String name);
 
+    protected abstract void updateServerStatus();
 
     private class ServerWatcherImpl implements ServerWatcher {
 
-
         @Override
         public void start(Command command) {
+            String name = command.getName();
             String namespace = command.getNamespace();
             String delegatedIp = command.getDelegatedIp();
-            if(!StringUtils.hasText(namespace)) {
+            if(!StringUtils.hasText(name)) {
                 return;
             }
 
             if(StringUtils.hasText(delegatedIp)) {
                 CompletableFuture.runAsync(() -> {
-                    DataSourceCfg config = dataSourceCfgOps.getByNamespace(namespace);
+                    DataSourceCfg config = dataSourceCfgOps.get(namespace, name);
                     String localIp = getLocalIp(config.getDataSourceType());
                     if(!delegatedIp.equals(localIp)) {
-                        logger.info("Ignore start database command for ip not matching. local: [{}] delegatedId: [{}]", localIp, delegatedIp);
-                        try {
-                            // 非指定ip延迟等待30s后竞争
-                            TimeUnit.SECONDS.sleep(30);
-                        } catch (InterruptedException ignored) {
-
-                        }
+                        logger.info("Ignore command for ip not matching. local: [{}] delegatedId: [{}]", localIp, delegatedIp);
                     }
                 });
-
             }
             CompletableFuture.runAsync(() -> {
-
-                DataSourceCfg config = dataSourceCfgOps.getByNamespace(namespace);
+                DataSourceCfg config = dataSourceCfgOps.get(namespace, name);
                 doStart(config);
+                logger.info("command successfully started namespace：{}, name:{}", namespace, name);
             });
 
         }
 
         @Override
         public void stop(Command command) {
+            String name = command.getName();
             String namespace = command.getNamespace();
-            if(!StringUtils.hasText(namespace)) {
+            if(!StringUtils.hasText(name)) {
                 return;
             }
             CompletableFuture.runAsync(() -> {
-                AbstractTrackServer.this.stop(namespace);
-                logger.info("[" + namespace + "] 关闭datasource监听成功");
+                AbstractTrackServer.this.doStop(namespace, name);
+                logger.info("command successfully stopped namespace：{}, name:{}", namespace, name);
             });
 
         }

@@ -24,7 +24,7 @@ public class DataSubscriberMethodAdapter implements DataSubscribeHandler {
     public DataSubscriberMethodAdapter(Object bean, Method method, DataSubscriber ann) {
         this.bean = bean;
         this.method = method;
-        this.key = Const.DATA_SOURCE + "_" + ann.namespace() + "_" + ann.database() + "_" + ann.table();
+        this.key = Const.PREFIX + "_" + ann.name() + "_" + ann.database() + "_" + ann.table();
         this.actions = ann.actions();
     }
 

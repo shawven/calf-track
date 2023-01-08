@@ -13,10 +13,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class ExampleHandlers {
 
-    private static final Logger logger = LoggerFactory.getLogger(ExampleDataEventHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(ExampleHandlers.class);
 
     @DataSubscriber(
-            namespace = "default",
+            name = "default",
             database = "test",
             table = "t_user",
             actions = {EventAction.INSERT, EventAction.UPDATE, EventAction.DELETE})

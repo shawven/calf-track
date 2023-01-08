@@ -10,7 +10,7 @@ import java.util.List;
  * @date 2023-01-05
  */
 @Data
-@ConfigurationProperties("calf-track.etcd")
+@ConfigurationProperties("track.etcd")
 public class EtcdProperties {
 
     private String url;

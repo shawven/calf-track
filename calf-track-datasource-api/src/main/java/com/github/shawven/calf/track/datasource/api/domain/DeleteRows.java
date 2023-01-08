@@ -21,7 +21,7 @@ public class DeleteRows extends BaseRows implements Serializable {
     }
 
     public DeleteRows(BaseRows baseRows, List<Map<String, Object>> rowMaps) {
-        super(baseRows.getNamespace(), baseRows.getEventAction(), baseRows.getDatabase(), baseRows.getTable());
+        super(baseRows.getDsName(), baseRows.getEventAction(), baseRows.getDatabase(), baseRows.getTable());
         super.setEventAction(EventAction.DELETE);
         this.rowMaps = rowMaps;
     }

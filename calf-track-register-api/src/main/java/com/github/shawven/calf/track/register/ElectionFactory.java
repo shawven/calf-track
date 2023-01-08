@@ -9,5 +9,5 @@ import com.github.shawven.calf.track.register.election.ElectionListener;
  */
 public interface ElectionFactory {
 
-    Election getElection(String path, String namespace, String uniqueId, long ttl, ElectionListener listener);
+    Election getElection(String path, String namespace, String name, long ttl, ElectionListener listener);
 }

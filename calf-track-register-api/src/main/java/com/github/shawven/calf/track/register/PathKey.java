@@ -10,24 +10,27 @@ import org.springframework.util.StringUtils;
 public class PathKey {
 
     private static final String DELIMITER = "/";
-    private static String prefix;
+    private static String PREFIX;
 
-    public static void setRoot(String root) {
+    static {
+        init(Const.PREFIX);
+    }
+
+    public static void init(String root) {
         // init
         root = ensureStartSlash(root);
         root = ensureEndSlash(root);
-
-        PathKey.prefix = root.concat(ensureEndSlash(Const.DATA_SOURCE));
+        PREFIX = root;
     }
 
     private PathKey() {}
 
     public static String concat(String key) {
         if (!StringUtils.hasText(key)) {
-            return prefix;
+            return PREFIX;
         }
 
-        return prefix.concat(removeStartSlash(key));
+        return PREFIX.concat(removeStartSlash(key));
     }
 
     public static String concat(String... keys) {

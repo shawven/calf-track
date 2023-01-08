@@ -35,21 +35,21 @@ public class BaseRows implements Serializable {
 
     private String table;
 
-    private String namespace;
+    private String dsName;
 
     private Long timestamp = System.currentTimeMillis();
 
     public BaseRows() {
     }
 
-    public BaseRows(String namespace, EventAction eventAction, String database, String table) {
-        this.namespace = namespace;
+    public BaseRows(String dsName, EventAction eventAction, String database, String table) {
+        this.dsName = dsName;
         this.eventAction = eventAction;
         this.database = database;
         this.table = table;
     }
 
     public String key() {
-        return namespace + "_" + database + "_" + table;
+        return dsName + "_" + database + "_" + table;
     }
 }

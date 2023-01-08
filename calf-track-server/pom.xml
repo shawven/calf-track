@@ -15,7 +15,7 @@
     <dependencies>
         <dependency>
             <groupId>com.github.shawven.calf</groupId>
-            <artifactId>calf-track-datasource-api</artifactId>
+            <artifactId>calf-track-datasource-mongo</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 

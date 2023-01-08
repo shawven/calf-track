@@ -12,6 +12,8 @@ import java.util.Set;
 @Data
 public class DataSourceStatus {
 
+    private String name;
+
     private String namespace;
 
     private String filename;

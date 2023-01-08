@@ -55,7 +55,6 @@ public class OpLogClientFactory {
      */
     public static final String UPDATE_CONTEXT_KEY = "$set";
 
-
     private long lastEventCount = 0;
 
     public OpLogClientFactory(StatusOps statusOps,
@@ -76,7 +75,7 @@ public class OpLogClientFactory {
     }
 
     /**
-     * 配置当前binlog位置
+     * 配置当前位置
      *
      * @param oplogClient
      * @param dataSourceCfg
@@ -90,27 +89,24 @@ public class OpLogClientFactory {
         }
     }
 
-    public boolean closeClient(OplogClient oplogClient, String namespace) {
+    public void closeClient(OplogClient oplogClient, DataSourceCfg namespace) {
         try {
             // remove active namespace
             oplogClient.close();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
-            return true;
+            return;
         }
-        DataSourceCfg dataSourceCfg = dataSourceCfgOps.getByNamespace(namespace);
+        DataSourceCfg dataSourceCfg = dataSourceCfgOps.get(namespace.getNamespace(), namespace.getName());
         try {
             while (dataSourceCfg.isActive()) {
                 TimeUnit.SECONDS.sleep(1);
-                dataSourceCfg = dataSourceCfgOps.getByNamespace(namespace);
+                dataSourceCfg = dataSourceCfgOps.get(namespace.getNamespace(), namespace.getName());
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             logger.error(e.getMessage(), e);
-            return false;
         }
-
-        return true;
     }
 
 

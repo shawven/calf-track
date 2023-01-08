@@ -11,11 +11,9 @@ import com.github.shawven.calf.track.register.Repository;
 import com.github.shawven.calf.track.register.domain.DataSourceCfg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class DataSourceCfgOpsImpl implements DataSourceCfgOps {
@@ -29,122 +27,82 @@ public class DataSourceCfgOpsImpl implements DataSourceCfgOps {
     }
 
     @Override
-    public List<DataSourceCfg> getByDataSourceType(String type) {
-        List<DataSourceCfg> dataSourceCfgs = listCfgs();
+    public Map<String, List<DataSourceCfg>> getNamespaceMapByType(String type) {
+        List<DataSourceCfg> dataSourceCfgs = list();
 
-        if(dataSourceCfgs.isEmpty()) {
+        if (dataSourceCfgs.isEmpty()) {
             logger.warn("There is no available datasource Configs!");
-            return dataSourceCfgs;
+            return Collections.emptyMap();
         }
-        Set<String> namespaces = new HashSet<>();
-        List<DataSourceCfg> filterDataSource = new ArrayList<>();
-        dataSourceCfgs.forEach(config -> {
-            if(!StringUtils.hasText(config.getNamespace())) {
-                throw new IllegalArgumentException("You need to config namespace!");
-            }
-            if(!namespaces.add(config.getNamespace())) {
-                throw new IllegalArgumentException("Duplicated namespace!");
-            }
-            if(config.getDataSourceType().equals(type)){
-                filterDataSource.add(config);
-            }
-        });
-        return filterDataSource;
+
+        return dataSourceCfgs.stream()
+                .filter(config -> config.getDataSourceType().equals(type))
+                .collect(Collectors.groupingBy(DataSourceCfg::getNamespace));
     }
 
     @Override
     public boolean create(DataSourceCfg newConfig) {
-        List<DataSourceCfg> dataSourceCfgs = listCfgs();
-
-        boolean exist = dataSourceCfgs.stream().anyMatch(c -> Objects.equals(newConfig.getId(), c.getId()));
-        if(exist) {
-            return false;
+        if (get(newConfig.getNamespace(), newConfig.getName()) != null) {
+            throw new RuntimeException(String.format("namespace: %s exist datasource name: %s",
+                    newConfig.getNamespace(), newConfig.getName()));
         }
 
-        newConfig.setId(UUID.randomUUID().toString().replace("-", ""));
-        if (dataSourceCfgs.isEmpty()) {
-            dataSourceCfgs = Collections.singletonList(newConfig);
-        } else {
-            dataSourceCfgs.add(newConfig);
+        if (newConfig.getName() == null) {
+            newConfig.setName(System.currentTimeMillis() + "");
         }
 
-        saveAll(dataSourceCfgs);
+        String key = PathKey.concat(Const.DATA_SOURCE, newConfig.getNamespace(), newConfig.getName());
+        repository.set(key, JSON.toJSONString(newConfig));
         return true;
     }
 
     @Override
     public boolean update(DataSourceCfg newConfig) {
-        if(Thread.currentThread().isInterrupted()) {
-            return false;
+        DataSourceCfg dataSourceCfg = get(newConfig.getNamespace(), newConfig.getName());
+        if (dataSourceCfg == null) {
+            throw new RuntimeException(String.format("namespace: %s not exist datasource name: %s",
+                    newConfig.getNamespace(),  newConfig.getName()));
         }
-        List<DataSourceCfg> configList = listCfgs();
-
-        AtomicBoolean modifyFlag = new AtomicBoolean(false);
-        configList = configList.stream()
-                .map((c) -> {
-                    if(Objects.equals(newConfig.getId(), c.getId())) {
-                        // 版本号小于集群中版本号则忽略
-                        if(newConfig.getVersion() < c.getVersion()) {
-                            logger.warn("Ignore BinLogConfig[{}] Modify case local version [{}] < current version [{}]", newConfig.getNamespace(), newConfig.getVersion(), c.getVersion());
-                            return c;
-                        } else {
-                            modifyFlag.set(true);
-                            return newConfig;
-                        }
-                    }
-                    return c;
-                }).collect(Collectors.toList());
-
-        if(modifyFlag.get()) {
-            saveAll(configList);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean remove(String id) {
-        if(!StringUtils.hasText(id)) {
-            return false;
-        }
-
-        List<DataSourceCfg> dataSourceCfgs = listCfgs();
-        dataSourceCfgs.removeIf(c -> Objects.equals(id, c.getId()));
-
-        saveAll(dataSourceCfgs);
+        String key = PathKey.concat(Const.DATA_SOURCE, dataSourceCfg.getNamespace(), dataSourceCfg.getName());
+        repository.set(key, JSON.toJSONString(dataSourceCfg));
 
         return true;
     }
 
     @Override
-    public DataSourceCfg getByNamespace(String namespace) {
-        List<DataSourceCfg> dataSourceCfgs = listCfgs();
-        Optional<DataSourceCfg> optional = dataSourceCfgs.stream()
-                .filter(config -> namespace.equals(config.getNamespace()))
-                .findAny();
+    public boolean remove(String namespace, String name) {
+        repository.del(PathKey.concat(Const.DATA_SOURCE, namespace, name));
+        return true;
+    }
 
-        return optional.orElse(null);
+    @Override
+    public DataSourceCfg get(String namespace, String name) {
+        String string = repository.get(PathKey.concat(Const.DATA_SOURCE, namespace, name));
+        return JSON.parseObject(string, DataSourceCfg.class);
 
     }
+
     @Override
-    public List<String> getNamespaceList() {
-        return listCfgs().stream()
-                .map(DataSourceCfg::getNamespace)
+    public List<DataSourceCfg> list() {
+        List<String> strings = repository.listTree(PathKey.concat(Const.DATA_SOURCE));
+        return strings.stream()
+                .map(s -> JSON.parseObject(s, DataSourceCfg.class))
                 .collect(Collectors.toList());
     }
 
-
     @Override
-    public List<DataSourceCfg> listCfgs() {
-        String value = repository.get(PathKey.concat(Const.NODE_CONFIG));
-        if (value == null) {
-            return Collections.emptyList();
-        }
-        return JSON.parseArray(value, DataSourceCfg.class);
+    public List<DataSourceCfg> list(String namespace) {
+        List<String> strings = repository.listTree(PathKey.concat(Const.DATA_SOURCE, namespace));
+        return strings.stream()
+                .map(s -> JSON.parseObject(s, DataSourceCfg.class))
+                .collect(Collectors.toList());
     }
 
-    private void saveAll(List<DataSourceCfg> dataSourceCfgs) {
-        repository.set(PathKey.concat(Const.NODE_CONFIG), JSON.toJSONString(dataSourceCfgs));
+    @Override
+    public List<String> listNames(String namespace) {
+        return list(namespace).stream()
+                .map(DataSourceCfg::getName)
+                .collect(Collectors.toList());
     }
 
     @Override

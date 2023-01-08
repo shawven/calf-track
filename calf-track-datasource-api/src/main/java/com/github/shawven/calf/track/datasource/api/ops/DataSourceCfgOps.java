@@ -4,6 +4,7 @@ import com.github.shawven.calf.track.datasource.api.ServerWatcher;
 import com.github.shawven.calf.track.register.domain.DataSourceCfg;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author xw
@@ -11,19 +12,21 @@ import java.util.List;
  */
 public interface DataSourceCfgOps {
 
-    List<DataSourceCfg> getByDataSourceType(String type);
+    Map<String, List<DataSourceCfg>> getNamespaceMapByType(String type);
 
     boolean create(DataSourceCfg config);
 
     boolean update(DataSourceCfg config);
 
-    boolean remove(String namespace);
+    boolean remove(String namespace, String name);
 
-    DataSourceCfg getByNamespace(String namespace);
+    List<DataSourceCfg> list();
 
-    List<DataSourceCfg> listCfgs();
+    List<DataSourceCfg> list(String namespace);
 
-    List<String> getNamespaceList();
+    List<String> listNames(String namespace);
+
+    DataSourceCfg get(String namespace, String name);
 
     void registerServerWatcher(ServerWatcher watcher);
 }

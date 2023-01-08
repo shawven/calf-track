@@ -7,6 +7,7 @@ import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.Watch;
 import io.etcd.jetcd.kv.GetResponse;
+import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
 import io.etcd.jetcd.options.WatchOption;
@@ -33,16 +34,16 @@ public class EtcdRepository implements Repository {
     }
 
     @Override
-    public List<String> listChildren(String key) {
+    public List<String> listTree(String prefix) {
         GetResponse response;
         try {
             response = client.getKVClient().get(
-                    ByteSequence.from(key, StandardCharsets.UTF_8),
+                    ByteSequence.from(prefix, StandardCharsets.UTF_8),
                     GetOption.newBuilder().isPrefix(true).build()
             ).get();
         } catch (InterruptedException | ExecutionException e) {
             logger.error(e.getMessage(), e);
-            return null;
+            return Collections.emptyList();
         }
         List<KeyValue> kvs = response.getKvs();
         if (kvs.isEmpty()) {
@@ -86,6 +87,19 @@ public class EtcdRepository implements Repository {
                     PutOption.newBuilder().withLeaseId(leaseId).build()
             );
         });
+    }
+
+    @Override
+    public void del(String key) {
+        client.getKVClient().delete(ByteSequence.from(key, StandardCharsets.UTF_8));
+    }
+
+    @Override
+    public void delTree(String prefix) {
+        client.getKVClient().delete(
+                ByteSequence.from(prefix, StandardCharsets.UTF_8),
+                DeleteOption.newBuilder().isPrefix(true).build()
+        );
     }
 
     @Override

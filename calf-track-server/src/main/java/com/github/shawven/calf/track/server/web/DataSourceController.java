@@ -1,8 +1,8 @@
 package com.github.shawven.calf.track.server.web;
 
 import com.alibaba.fastjson.JSONObject;
-import com.github.shawven.calf.track.register.domain.InstanceStatus;
 import com.github.shawven.calf.track.register.domain.DataSourceCfg;
+import com.github.shawven.calf.track.register.domain.ServerStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,12 +20,13 @@ public class DataSourceController {
     private DataSourceService dataSourceService;
 
     @GetMapping("/list")
-    public List<DataSourceCfg> datasourceConfigs() {
-        return dataSourceService.listCfgs();
+    public List<DataSourceCfg> datasourceConfigs(String namespace) {
+        return dataSourceService.listCfgs(namespace);
     }
 
-    @PostMapping("/persist")
-    public Result saveDatasourceConfig(@RequestBody DataSourceCfg config) {
+    @PostMapping("/save")
+    public Result saveDatasourceConfig(String namespace, @RequestBody DataSourceCfg config) {
+        config.setNamespace(namespace);
         if(dataSourceService.saveDatasourceConfig(config)) {
             return new Result(Result.SUCCESS, "添加数据源成功");
         } else {
@@ -34,7 +35,8 @@ public class DataSourceController {
     }
 
     @PostMapping("/update")
-    public Result updateDatasourceConfig(@RequestBody DataSourceCfg config) {
+    public Result updateDatasourceConfig(String namespace, @RequestBody DataSourceCfg config) {
+        config.setNamespace(namespace);
         if(dataSourceService.updateDatasourceConfig(config)) {
             return new Result(Result.SUCCESS, "更新数据源成功");
         } else {
@@ -43,8 +45,8 @@ public class DataSourceController {
     }
 
     @PostMapping("/remove")
-    public Result removeDatasourceConfig(@RequestBody DataSourceCfg config) {
-        if(dataSourceService.removeDatasourceConfig(config.getNamespace())) {
+    public Result removeDatasourceConfig(String namespace, @RequestBody DataSourceCfg config) {
+        if(dataSourceService.removeDatasourceConfig(namespace, config.getName())) {
             return new Result(Result.SUCCESS, "移除数据源成功");
         } else {
             return new Result(Result.ERROR, "移除数据源失败");
@@ -52,11 +54,11 @@ public class DataSourceController {
     }
 
     @PostMapping("/start")
-    public Result startDatasource(@RequestBody JSONObject jsonObject) {
-        String namespace = jsonObject.getString("namespace");
+    public Result startDatasource(String namespace, @RequestBody JSONObject jsonObject) {
+        String name = jsonObject.getString("name");
         String delegatedIp = jsonObject.getString("delegatedIp");
 
-        if(dataSourceService.startDatasource(namespace, delegatedIp)) {
+        if(dataSourceService.startDatasource(namespace, name, delegatedIp)) {
             return new Result(Result.SUCCESS, "发送开启数据源监听命令成功");
         } else {
             return new Result(Result.ERROR, "发送开启数据源监听命令失败");
@@ -64,9 +66,9 @@ public class DataSourceController {
     }
 
     @PostMapping("/stop")
-    public Result stopDatasource(@RequestBody JSONObject JsonObject) {
-
-        if(dataSourceService.stopDatasource(JsonObject.getString("namespace"))) {
+    public Result stopDatasource(String namespace, @RequestBody JSONObject jsonObject) {
+        String name = jsonObject.getString("name");
+        if (dataSourceService.stopDatasource(namespace, name)) {
             return new Result(Result.SUCCESS, "发送关闭数据源监听命令成功");
         } else {
             return new Result(Result.ERROR, "发送关闭数据源监听命令失败");
@@ -74,7 +76,12 @@ public class DataSourceController {
     }
 
     @GetMapping("/service-status")
-    public List<InstanceStatus> getServiceStatus() {
+    public List<ServerStatus> getServiceStatus() {
         return dataSourceService.getServiceStatus();
+    }
+
+    @GetMapping("/names")
+    public List<String> namespaceList(String namespace) {
+        return dataSourceService.listNames(namespace);
     }
 }

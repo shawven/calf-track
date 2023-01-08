@@ -13,15 +13,15 @@ import java.util.function.Consumer;
  */
 public interface ClientOps {
 
-    List<ClientInfo> listConsumerClient(String queryType);
+    List<ClientInfo> listConsumerClientsByNamespaceAndName(String namespace, String name);
 
-    List<ClientInfo> listConsumerClient(DataSourceCfg dataSourceCfg);
+    List<ClientInfo> listConsumerClientsByNamespaceAndQueueType(String namespace, String queueType);
 
-    List<ClientInfo> listConsumerClientsByKey(String clientInfoKey);
+    List<ClientInfo> listConsumerClientsByKey(String namespace, String clientInfoKey);
 
-    void addConsumerClient(ClientInfo clientInfo);
+    void addConsumerClient(String namespace, ClientInfo clientInfo);
 
-    void removeConsumerClient(List<ClientInfo> clientInfos);
+    void removeConsumerClient(String namespace, List<ClientInfo> clientInfos);
 
     boolean sendCommand(Command command);
 

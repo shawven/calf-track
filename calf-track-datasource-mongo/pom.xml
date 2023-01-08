@@ -25,10 +25,15 @@
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
-
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongodb-driver-sync</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.reactivex.rxjava3</groupId>
+            <artifactId>rxjava</artifactId>
+            <version>3.1.5</version>
         </dependency>
 
         <!-- Autoconfigure -->
@@ -44,10 +49,5 @@
             <optional>true</optional>
         </dependency>
 
-        <dependency>
-            <groupId>io.reactivex.rxjava3</groupId>
-            <artifactId>rxjava</artifactId>
-            <version>3.1.5</version>
-        </dependency>
     </dependencies>
 </project>

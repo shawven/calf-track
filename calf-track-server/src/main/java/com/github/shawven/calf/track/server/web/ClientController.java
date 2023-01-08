@@ -28,33 +28,22 @@ public class ClientController {
     ClientService clientService;
 
     @PostMapping(value = "/add")
-    public Result add(@RequestBody String data) {
+    public Result add(String namespace, @RequestBody String data) {
         JSONObject jsonObject = JSON.parseObject(data);
-        JSONArray eventActions = jsonObject.getJSONArray("eventAction");
         Integer partitions = jsonObject.getInteger("partitions");
         Integer replication = jsonObject.getInteger("replication");
-        for (int i = 0; i < eventActions.size(); i++) {
-            JSONObject object = JSON.parseObject(data);
-            object.put("eventAction", eventActions.getString(i));
-            ClientInfo clientInfo = JSON.parseObject(JSON.toJSONString(object), ClientInfo.class);
-            //生成key字符串
-            clientInfo = new ClientInfo(
-                    clientInfo.getClientId(),
-                    clientInfo.getQueueType(),
-                    clientInfo.getNamespace(),
-                    clientInfo.getDatabaseName(),
-                    clientInfo.getTableName(), clientInfo.getEventAction());
 
-            clientService.addClient(clientInfo, partitions, replication);
-        }
+        ClientInfo clientInfo = jsonObject.toJavaObject(ClientInfo.class);
+        clientService.addClient(namespace, clientInfo, partitions, replication);
+
         return Result.success("添加成功");
     }
 
     @RequestMapping(value = "/addAll", method = POST)
-    public Result addAll(@RequestBody String data) {
+    public Result addAll(String namespace, @RequestBody String data) {
         log.info(data);
         List<ClientInfo> clientInfos = JSON.parseArray(data, ClientInfo.class);
-        clientInfos.forEach(clientInfo -> clientService.addClient(clientInfo, null, null));
+        clientInfos.forEach(clientInfo -> clientService.addClient(namespace, clientInfo, null, null));
         return Result.success("添加成功");
     }
 
@@ -63,8 +52,8 @@ public class ClientController {
      * @return
      */
     @RequestMapping(value = "/listClientMap", method = GET)
-    public Map<String, List<ClientInfo>> listClientMap() {
-        return clientService.listClientMap();
+    public Map<String, List<ClientInfo>> listClientMap(String namespace) {
+        return clientService.listClientMap(namespace);
     }
 
     /**
@@ -72,8 +61,8 @@ public class ClientController {
      * @return
      */
     @RequestMapping(value = "/list", method = GET)
-    public List<ClientInfo> list() {
-        return clientService.listClient(null);
+    public List<ClientInfo> list(String namespace) {
+        return clientService.listClient(namespace, null);
     }
 
     /**
@@ -81,8 +70,8 @@ public class ClientController {
      * @return
      */
     @RequestMapping(value = "/listRedis", method = GET)
-    public List<ClientInfo> listRedis() {
-        return clientService.listClient(Const.QUEUE_TYPE_REDIS);
+    public List<ClientInfo> listRedis(String namespace) {
+        return clientService.listClient(namespace, Const.QUEUE_TYPE_REDIS);
     }
 
     /**
@@ -90,8 +79,8 @@ public class ClientController {
      * @return
      */
     @RequestMapping(value = "/listRabbit", method = GET)
-    public List<ClientInfo> listRabbit() {
-        return clientService.listClient(Const.QUEUE_TYPE_RABBIT);
+    public List<ClientInfo> listRabbit(String namespace) {
+        return clientService.listClient(namespace, Const.QUEUE_TYPE_RABBIT);
     }
 
     /**
@@ -99,8 +88,8 @@ public class ClientController {
      * @return
      */
     @RequestMapping(value = "/listKafka", method = GET)
-    public List<ClientInfo> listKafka() {
-        return clientService.listClient(Const.QUEUE_TYPE_KAFKA);
+    public List<ClientInfo> listKafka(String namespace) {
+        return clientService.listClient(namespace, Const.QUEUE_TYPE_KAFKA);
     }
 
     /**
@@ -108,13 +97,13 @@ public class ClientController {
      * @return
      */
     @RequestMapping(value = "/listErr",method = GET)
-    public List<String> listErr(){
-        return clientService.listErrorClient();
+    public List<String> listErr(String namespace){
+        return clientService.listErrorClient(namespace);
     }
 
     @RequestMapping(value = "/delete", method = POST)
-    public Result delete(@RequestBody ClientInfo clientInfo) {
-        clientService.deleteClient(clientInfo);
+    public Result delete(String namespace, @RequestBody ClientInfo clientInfo) {
+        clientService.deleteClient(namespace, clientInfo);
         return Result.success("删除成功!");
     }
 
@@ -124,8 +113,8 @@ public class ClientController {
      * @return
      */
     @RequestMapping(value = "/getqueuesize", method = GET)
-    public String getQueueSize(String clientName,String type,int page) {
-        return clientService.getqueuesize(clientName,type,page);
+    public String getQueueSize(String namespace, String clientName, String type, int page) {
+        return clientService.getqueuesize(namespace, clientName, type, page);
     }
     /**
      * 获取日志文件状态
@@ -133,8 +122,8 @@ public class ClientController {
      * @return
      */
     @RequestMapping(value = "/getlogstatus", method = GET)
-    public String getLogStatus() {
-        return clientService.getLogStatus();
+    public String getLogStatus(String namespace) {
+        return clientService.getLogStatus(namespace);
     }
 
     /**
@@ -144,18 +133,13 @@ public class ClientController {
      * @return
      */
     @RequestMapping(value = "/deleteFromQueue",method =GET)
-    public boolean enqueueAgain(String uuid,String errClient){
-        return clientService.deleteFromQueue(uuid,errClient);
-    }
-
-    @GetMapping("/namespaceList")
-    public List<String> namespaceList() {
-        return clientService.listNamespace();
+    public boolean enqueueAgain(String namespace, String uuid, String errClient){
+        return clientService.deleteFromQueue(namespace, uuid,errClient);
     }
 
     @GetMapping("/deleteTopic")
-    public Result deleteTopic(String clientInfoKey) {
-        return clientService.deleteTopic(clientInfoKey);
+    public Result deleteTopic(String namespace, String clientInfoKey) {
+        return clientService.deleteTopic(namespace, clientInfoKey);
     }
 }
 

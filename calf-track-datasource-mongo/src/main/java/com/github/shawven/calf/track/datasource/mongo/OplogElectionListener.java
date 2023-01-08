@@ -62,14 +62,16 @@ public class OplogElectionListener implements ElectionListener {
     @Override
     public void isLeader() {
         oplogClient = opLogClientFactory.initClient(dataSourceCfg);
+        String namespace = dataSourceCfg.getNamespace();
+        String name = dataSourceCfg.getName();
 
         // 更新关注的事件
-        updateWatchedEvents(clientOps.listConsumerClient(dataSourceCfg));
+        updateWatchedEvents(clientOps.listConsumerClientsByNamespaceAndName(namespace, name));
 
         // 监听Client列表变化，更新关注的事件
         clientOps.watcherClientInfo(dataSourceCfg, this::updateWatchedEvents);
 
-        OpLogEventFormatterFactory formatterFactory = new OpLogEventFormatterFactory(dataSourceCfg.getNamespace());
+        OpLogEventFormatterFactory formatterFactory = new OpLogEventFormatterFactory(namespace);
 
         // 启动连接
         try {
@@ -103,7 +105,7 @@ public class OplogElectionListener implements ElectionListener {
 
         dataSourceCfg.setActive(false);
         dataSourceCfgOps.update(dataSourceCfg);
-        opLogClientFactory.closeClient(oplogClient, dataSourceCfg.getNamespace());
+        opLogClientFactory.closeClient(oplogClient, dataSourceCfg);
     }
 
     /**
@@ -175,7 +177,7 @@ public class OplogElectionListener implements ElectionListener {
                 .collect(Collectors.groupingBy(this::getEventKey))
                 .forEach((key, clients) -> {
                     Set<EventAction> newSet = clients.stream()
-                            .map(ClientInfo::getEventAction)
+                            .flatMap(c -> c.getEventActions().stream())
                             .filter(Objects::nonNull)
                             .collect(Collectors.toSet());
                     Set<EventAction> set = watchedEvents.computeIfAbsent(key, (s) -> new HashSet<>());

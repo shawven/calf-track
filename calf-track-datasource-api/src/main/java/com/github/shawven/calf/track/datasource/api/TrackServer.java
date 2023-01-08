@@ -15,5 +15,5 @@ public interface TrackServer {
 
     void start();
 
-    void stop(String namespace);
+    void stop();
 }

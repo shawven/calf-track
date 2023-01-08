@@ -1,5 +1,6 @@
 package com.github.shawven.calf.track.register.zookeeper;
 
+import com.github.shawven.calf.track.common.Const;
 import com.github.shawven.calf.track.register.ElectionFactory;
 import com.github.shawven.calf.track.register.election.Election;
 import com.github.shawven.calf.track.register.election.ElectionListener;
@@ -11,8 +12,6 @@ import org.apache.curator.framework.CuratorFramework;
  */
 public class ZkElectionFactory implements ElectionFactory {
 
-    private static final String DEFAULT_PATH = "/leader-selector/";
-
     private final CuratorFramework client;
 
     public ZkElectionFactory(CuratorFramework client) {
@@ -20,13 +19,13 @@ public class ZkElectionFactory implements ElectionFactory {
     }
 
     @Override
-    public Election getElection(String path, String namespace, String uniqueId,
+    public Election getElection(String path, String namespace, String name,
                                 long ttl, ElectionListener listener) {
 
         path = path != null
                 ? path.endsWith("/") ? path : path.concat("/")
-                : DEFAULT_PATH;
+                : Const.LEADER;
 
-        return new ZkElection(client, path + namespace, uniqueId, ttl, true, listener);
+        return new ZkElection(client, path + namespace, name, ttl, true, listener);
     }
 }

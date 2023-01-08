@@ -28,12 +28,12 @@ public class ZkRepository implements Repository {
     }
 
     @Override
-    public List<String> listChildren(String key) {
+    public List<String> listTree(String prefix) {
         try {
             List<String> result = new ArrayList<>();
-            List<String> paths = client.getChildren().forPath(key);
+            List<String> paths = client.getChildren().forPath(prefix);
             for (String childPath : paths) {
-                byte[] bytes = client.getData().forPath(key + "/" + childPath);
+                byte[] bytes = client.getData().forPath(prefix + "/" + childPath);
                 result.add(new String(bytes));
             }
             return result;
@@ -92,6 +92,24 @@ public class ZkRepository implements Repository {
         }
     }
 
+    @Override
+    public void del(String key) {
+        try {
+            client.delete().guaranteed().forPath(key);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void delTree(String prefix) {
+        try {
+            client.delete().guaranteed().deletingChildrenIfNeeded().forPath(prefix);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+    }
+
     private void create(String key, String val) throws Exception {
         try {
             client.create()
@@ -128,7 +146,6 @@ public class ZkRepository implements Repository {
     private void update(String key, String val, Stat stat) throws Exception {
         client.setData()
                 .withVersion(stat.getVersion())
-
                 .forPath(key, val.getBytes(StandardCharsets.UTF_8));
     }
 

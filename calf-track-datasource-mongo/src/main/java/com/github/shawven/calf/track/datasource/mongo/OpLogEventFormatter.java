@@ -27,10 +27,10 @@ public interface OpLogEventFormatter {
 
     class Write implements OpLogEventFormatter {
 
-        private final String namespace;
+        private final String dsName;
 
-        public Write(String namespace) {
-            this.namespace = namespace;
+        public Write(String dsName) {
+            this.dsName = dsName;
         }
 
         @Override
@@ -40,7 +40,7 @@ public interface OpLogEventFormatter {
             //添加表信息
             insertRows.setDatabase(DocumentUtils.getDataBase(event));
             insertRows.setTable(DocumentUtils.getTable(event));
-            insertRows.setNamespace(namespace);
+            insertRows.setDsName(dsName);
             //添加列映射
             Document context = (Document) event.get(OpLogClientFactory.CONTEXT_KEY);
             List<Map<String, Object>> urs = new ArrayList<>();
@@ -52,10 +52,10 @@ public interface OpLogEventFormatter {
 
     class Update implements OpLogEventFormatter {
 
-        private final String namespace;
+        private final String dsName;
 
-        public Update(String namespace) {
-            this.namespace = namespace;
+        public Update(String dsName) {
+            this.dsName = dsName;
         }
 
         @Override
@@ -65,7 +65,7 @@ public interface OpLogEventFormatter {
             //添加表信息
             updateRows.setDatabase(DocumentUtils.getDataBase(event));
             updateRows.setTable(DocumentUtils.getTable(event));
-            updateRows.setNamespace(namespace);
+            updateRows.setDsName(dsName);
             //添加列映射
 
             List<UpdateRows.Row> urs = new ArrayList<>();
@@ -80,10 +80,10 @@ public interface OpLogEventFormatter {
 
     class Delete implements OpLogEventFormatter {
 
-        private final String namespace;
+        private final String dsName;
 
-        public Delete(String namespace) {
-            this.namespace = namespace;
+        public Delete(String dsName) {
+            this.dsName = dsName;
         }
 
         @Override
@@ -93,7 +93,7 @@ public interface OpLogEventFormatter {
             //添加表信息
             deleteRows.setDatabase(DocumentUtils.getDataBase(event));
             deleteRows.setTable(DocumentUtils.getTable(event));
-            deleteRows.setNamespace(namespace);
+            deleteRows.setDsName(dsName);
             //添加列映射
             Document context = (Document) event.get(OpLogClientFactory.CONTEXT_KEY);
             List<Map<String, Object>> urs = new ArrayList<>();

@@ -2,6 +2,7 @@ package com.github.shawven.calf.track.server.autoconfig;
 
 import com.github.shawven.calf.track.common.Const;
 import com.github.shawven.calf.track.datasource.api.DataPublisher;
+import com.github.shawven.calf.track.server.publisher.DataPublisherManager;
 import com.github.shawven.calf.track.server.publisher.rabbit.RabbitDataPublisher;
 import com.github.shawven.calf.track.server.publisher.rabbit.RabbitService;
 import com.rabbitmq.http.client.Client;
@@ -14,12 +15,21 @@ import org.springframework.boot.autoconfigure.amqp.RabbitProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.util.Map;
 
 @Configuration(proxyBeanMethods = false)
 class TrackDataPublisherAutoConfiguration {
+
+    @Bean
+    @Primary
+    public DataPublisherManager dataPublisherManager(Map<String, DataPublisher> dataPublisherMap){
+        return new DataPublisherManager(dataPublisherMap);
+    }
+
 
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnClass(ConnectionFactory.class)

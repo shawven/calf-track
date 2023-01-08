@@ -1,5 +1,6 @@
 package com.github.shawven.calf.track.register.etcd;
 
+import com.github.shawven.calf.track.common.Const;
 import com.github.shawven.calf.track.register.ElectionFactory;
 import com.github.shawven.calf.track.register.election.Election;
 import com.github.shawven.calf.track.register.election.ElectionListener;
@@ -20,13 +21,13 @@ public class EtcdElectionFactory implements ElectionFactory {
     }
 
     @Override
-    public Election getElection(String path, String namespace, String uniqueId,
+    public Election getElection(String path, String namespace, String name,
                                 long ttl, ElectionListener listener) {
 
         path = path != null
                 ? path.endsWith("/") ? path : path.concat("/")
-                : DEFAULT_PATH;
+                : Const.LEADER;
 
-        return new EtcdElection(client, path + namespace, uniqueId, ttl, true, listener);
+        return new EtcdElection(client, path + namespace, name, ttl, true, listener);
     }
 }

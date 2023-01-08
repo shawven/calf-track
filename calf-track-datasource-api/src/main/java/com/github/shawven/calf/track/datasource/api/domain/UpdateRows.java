@@ -21,7 +21,7 @@ public class UpdateRows extends BaseRows implements Serializable {
     }
 
     public UpdateRows(BaseRows baseRows, List<Row> rows) {
-        super(baseRows.getNamespace(), baseRows.getEventAction(), baseRows.getDatabase(), baseRows.getTable());
+        super(baseRows.getDsName(), baseRows.getEventAction(), baseRows.getDatabase(), baseRows.getTable());
         super.setEventAction(EventAction.UPDATE);
         this.rows = rows;
     }

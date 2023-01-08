@@ -1,10 +1,9 @@
 package com.github.shawven.calf.track.examples;
 
-import com.github.shawven.calf.track.common.EventAction;
 import com.github.shawven.calf.track.client.DataSubscribeHandler;
+import com.github.shawven.calf.track.common.EventAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 
 
 /**
@@ -19,14 +18,14 @@ import org.springframework.stereotype.Service;
  *   COLUMN -> 某列值一致的按顺序执行
  *   NONE -> 无序
  */
-@Service
+//@Service
 public class ExampleDataEventHandler implements DataSubscribeHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExampleDataEventHandler.class);
 
     @Override
     public String key() {
-        return "default_test_t_user";
+        return "track_default_test_t_user";
     }
 
     @Override

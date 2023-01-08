@@ -11,7 +11,7 @@ import com.github.shawven.calf.track.datasource.api.ops.DataSourceCfgOps;
 import com.github.shawven.calf.track.datasource.api.ops.StatusOps;
 import com.github.shawven.calf.track.register.PathKey;
 import com.github.shawven.calf.track.register.domain.DataSourceCfg;
-import com.github.shawven.calf.track.register.domain.InstanceStatus;
+import com.github.shawven.calf.track.register.domain.ServerStatus;
 import com.github.shawven.calf.track.register.election.Election;
 
 import java.time.LocalDateTime;
@@ -59,47 +59,47 @@ public class MongoTrackServerImpl extends AbstractTrackServer {
     @Override
     public void doStart(DataSourceCfg dataSourceCfg) {
         executorService.submit(() -> {
-            String path = PathKey.concat(Const.LEADER_PATH);
+            String path = PathKey.concat(Const.LEADER);
             String namespace = dataSourceCfg.getNamespace();
-            String uniqueId = NetUtils.getLocalAddress().getHostAddress();
+            String name = dataSourceCfg.getName();
 
             OplogElectionListener listener = new OplogElectionListener(dataSourceCfg,
                     opLogClientFactory, statusOps, clientOps, dataSourceCfgOps, dataPublisherManager);
 
-            Election election = electionFactory.getElection(path, namespace, uniqueId, 20L, listener);
+            Election election = electionFactory.getElection(path, namespace, name, 20L, listener);
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 logger.info("shutdownHook trigger close");
                 election.close();
             }));
 
-            electionMap.put(namespace, election);
+            electionMap.put(namespace + "-" + name, election);
             election.start();
         });
     }
 
     @Override
-    public void stop(String namespace) {
-        Election election = electionMap.get(namespace);
+    public void doStop(String namespace, String name) {
+        Election election = electionMap.get(namespace + "-" + name);
         if(election != null) {
             election.close();
         }
     }
 
     @Override
-    protected void updateInstanceStatus() {
+    protected void updateServerStatus() {
         scheduledExecutorService.scheduleWithFixedDelay(() -> {
-            InstanceStatus instanceStatus = new InstanceStatus();
+            ServerStatus serverStatus = new ServerStatus();
             String localIp = TYPE + ":" + NetUtils.getLocalAddress().getHostAddress();
-            instanceStatus.setIp(localIp);
-            instanceStatus.setTotalEventCount(opLogClientFactory.getEventCount());
-            instanceStatus.setLatelyEventCount(opLogClientFactory.eventCountSinceLastTime());
-            instanceStatus.setTotalPublishCount(dataPublisherManager.getPublishCount());
-            instanceStatus.setLatelyPublishCount(dataPublisherManager.publishCountSinceLastTime());
-            instanceStatus.setUpdateTime(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+            serverStatus.setIp(localIp);
+            serverStatus.setTotalEventCount(opLogClientFactory.getEventCount());
+            serverStatus.setLatelyEventCount(opLogClientFactory.eventCountSinceLastTime());
+            serverStatus.setTotalPublishCount(dataPublisherManager.getPublishCount());
+            serverStatus.setLatelyPublishCount(dataPublisherManager.publishCountSinceLastTime());
+            serverStatus.setUpdateTime(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
 
-            statusOps.updateInstanceStatus(localIp, instanceStatus);
-            logger.info("updateInstanceStatus: [{}]", instanceStatus);
+            statusOps.updateServerStatus(localIp, serverStatus);
+            logger.info("updateInstanceStatus: [{}]", serverStatus);
         }, 10, 20, TimeUnit.SECONDS);
     }
 }

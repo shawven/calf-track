@@ -6,15 +6,15 @@ package com.github.shawven.calf.track.common;
  */
 public class Const {
 
-    public static final String DEFAULT_NAMESPACE = "default";
+    public static final String NAMESPACE = "default";
 
     public static final String COMMAND = "command";
 
-    public static final String NODE_CONFIG = "node-config";
+    public static final String DATA_SOURCE = "data-source";
 
-    public static final String LEADER_PATH = "leader-selector";
+    public static final String LEADER = "leader";
 
-    public static final String SERVICE_STATUS_PATH =  "service-status";
+    public static final String SERVER_STATUS =  "server-status";
 
     // 队列类型
     public static final String QUEUE_TYPE_REDIS = "redis";
@@ -37,20 +37,20 @@ public class Const {
     /**
      * 数据源前缀
      */
-    public static final String DATA_SOURCE = "oplog";
+    public static final String PREFIX = "track";
 
     // rabbit
-    public static final String RABBIT_EVENT_EXCHANGE = DATA_SOURCE;
+    public static final String RABBIT_EVENT_EXCHANGE = PREFIX;
 
 
     // redis
-    public static final String REDIS_PREFIX = DATA_SOURCE + "::";
+    public static final String REDIS_PREFIX = PREFIX + "::";
 
 
     /**
      * 事件数据队列前缀
      */
-    private static final String EVENT_QUEUE_PREFIX = DATA_SOURCE;
+    private static final String EVENT_QUEUE_PREFIX = PREFIX;
 
     public static String withEventQueue(String suffix) {
         return EVENT_QUEUE_PREFIX + "_" + suffix;

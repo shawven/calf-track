@@ -6,6 +6,7 @@ import com.github.shawven.calf.track.common.EventAction;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author xw
@@ -17,9 +18,9 @@ public class ClientInfo implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 客户端编号
+     * 名称
      */
-    private String clientId;
+    private String name;
 
     /**
      * 队列实现方式 默认为redis
@@ -29,7 +30,7 @@ public class ClientInfo implements Serializable {
     /**
      * 关注的数据库的标识
      */
-    private String namespace = Const.DEFAULT_NAMESPACE;
+    private String dsName;
 
     /**
      * 关注的数据库名
@@ -44,24 +45,23 @@ public class ClientInfo implements Serializable {
     /**
      * 关注的表的事件
      */
-    private EventAction eventAction;
+    private List<EventAction> eventActions;
 
     /**
      * 拼接key，避免频繁拼接
      */
     private String key;
 
-    public ClientInfo() {}
 
-    public ClientInfo(String clientId, String queueType,
-                      String namespace, String databaseName,
-                      String tableName, EventAction eventAction) {
-        this.clientId = clientId;
+    public ClientInfo(String name, String queueType,
+                      String dsName, String databaseName,
+                      String tableName, List<EventAction> eventActions) {
+        this.name = name;
         this.queueType = queueType;
-        this.namespace = namespace == null ? Const.DEFAULT_NAMESPACE : namespace;
+        this.dsName = dsName == null ? Const.NAMESPACE : dsName;
         this.databaseName = databaseName;
         this.tableName = tableName;
-        this.eventAction = eventAction;
-        this.key = this.namespace + "_" + databaseName + "_" + tableName;
+        this.eventActions = eventActions;
+        this.key = this.dsName + "_" + databaseName + "_" + tableName;
     }
 }

@@ -7,7 +7,7 @@ import com.github.shawven.calf.track.datasource.api.ops.StatusOps;
 import com.github.shawven.calf.track.register.PathKey;
 import com.github.shawven.calf.track.register.domain.DataSourceCfg;
 import com.github.shawven.calf.track.register.domain.DataSourceStatus;
-import com.github.shawven.calf.track.register.domain.InstanceStatus;
+import com.github.shawven.calf.track.register.domain.ServerStatus;
 import com.github.shawven.calf.track.register.Repository;
 import org.springframework.util.StringUtils;
 
@@ -35,12 +35,14 @@ public class StatusOpsImpl implements StatusOps {
         String dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(now), ZoneId.systemDefault())
                 .format(DateTimeFormatter.ISO_DATE_TIME);
 
+        String name = config.getName();
         String namespace = config.getNamespace();
 
-        String metaData = repository.get(getKey(namespace));
+        String metaData = repository.get(getKey(namespace, name));
         DataSourceStatus status;
         if(!StringUtils.hasText(metaData)) {
             status = new DataSourceStatus();
+            status.setName(config.getName());
             status.setNamespace(config.getNamespace());
         } else {
             status = JSON.parseObject(metaData).toJavaObject(DataSourceStatus.class);
@@ -51,14 +53,14 @@ public class StatusOpsImpl implements StatusOps {
         status.setTimestamp(now);
         status.setDateTime(dateTime);
 
-        repository.set(getKey(namespace), JSON.toJSONString(status));
+        repository.set(getKey(namespace, name), JSON.toJSONString(status));
     }
 
     @Override
-    public List<DataSourceStatus> listStatus() {
-        return dataSourceCfgOps.listCfgs().stream()
+    public List<DataSourceStatus> listStatus(String namespace) {
+        return dataSourceCfgOps.list(namespace).stream()
                 .map(config -> {
-                    String metaData = repository.get(getKey(config.getNamespace()));
+                    String metaData = repository.get(getKey(config.getNamespace(), config.getName()));
                     if (metaData == null) {
                         return null;
                     }
@@ -70,10 +72,11 @@ public class StatusOpsImpl implements StatusOps {
     }
 
     @Override
-    public DataSourceStatus getDataSourceStatus(DataSourceCfg dataSourceCfg) {
-        String namespace = dataSourceCfg.getNamespace();
+    public DataSourceStatus getDataSourceStatus(DataSourceCfg config) {
+        String name = config.getName();
+        String namespace = config.getNamespace();
 
-        String metaData = repository.get(getKey(namespace));
+        String metaData = repository.get(getKey(namespace, name));
         if(!StringUtils.hasText(metaData)) {
             return null;
         }
@@ -82,9 +85,9 @@ public class StatusOpsImpl implements StatusOps {
 
 
     @Override
-    public void updateInstanceStatus(String serviceKey, InstanceStatus status) {
+    public void updateServerStatus(String serverKey, ServerStatus status) {
         repository.set(
-                PathKey.concat(Const.SERVICE_STATUS_PATH, serviceKey),
+                PathKey.concat(Const.SERVER_STATUS, serverKey),
                 JSON.toJSONString(status),
                 20
         );
@@ -94,14 +97,14 @@ public class StatusOpsImpl implements StatusOps {
      * @return
      */
     @Override
-    public List<InstanceStatus> getInstanceStatus() {
-        List<String> strings = repository.listChildren(PathKey.concat(Const.SERVICE_STATUS_PATH));
+    public List<ServerStatus> getServerStatus() {
+        List<String> strings = repository.listTree(PathKey.concat(Const.SERVER_STATUS));
         return strings.stream()
-                .map(str -> JSON.parseObject(str, InstanceStatus.class))
+                .map(str -> JSON.parseObject(str, ServerStatus.class))
                 .collect(Collectors.toList());
     }
 
-    private String getKey(String namespace) {
-        return PathKey.concat(namespace, Const.STATUS_KEY);
+    private String getKey(String namespace, String name) {
+        return PathKey.concat(Const.STATUS_KEY, namespace, name);
     }
 }

@@ -10,11 +10,11 @@ import java.util.Set;
  * @date 2023-01-05
  */
 @Data
-public class InstanceStatus {
+public class ServerStatus {
 
     private String ip;
 
-    private Set<String> activeNamespaces;
+    private Set<String> activeDsCount;
 
     private long totalEventCount;
 
