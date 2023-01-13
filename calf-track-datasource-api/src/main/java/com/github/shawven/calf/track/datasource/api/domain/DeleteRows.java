@@ -17,13 +17,13 @@ public class DeleteRows extends BaseRows implements Serializable {
 
     private List<Map<String, Object>> rowMaps;
 
-    public DeleteRows() {
+    public DeleteRows(String namespace, String dsName, String destQueue, String database, String table) {
+        super(namespace, dsName, destQueue, EventAction.DELETE, database, table);
     }
 
-    public DeleteRows(BaseRows baseRows, List<Map<String, Object>> rowMaps) {
-        super(baseRows.getDsName(), baseRows.getEventAction(), baseRows.getDatabase(), baseRows.getTable());
-        super.setEventAction(EventAction.DELETE);
-        this.rowMaps = rowMaps;
+    public static DeleteRows convertForm(BaseRows baseRows) {
+        return new DeleteRows(baseRows.getNamespace(), baseRows.getDsName(),
+                baseRows.getDestQueue(), baseRows.getDatabase(), baseRows.getTable());
     }
 
     public List<Map<String, Object>> getRowMaps() {

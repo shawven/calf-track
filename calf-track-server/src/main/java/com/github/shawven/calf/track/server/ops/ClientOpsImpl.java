@@ -61,7 +61,8 @@ public class ClientOpsImpl implements ClientOps {
     }
 
     @Override
-    public void addConsumerClient(String namespace, ClientInfo clientInfo) {
+    public void addConsumerClient(ClientInfo clientInfo) {
+        String namespace = clientInfo.getNamespace();
         if (!dataSourceCfgOps.listNames(namespace).contains(clientInfo.getDsName())) {
             throw new RuntimeException(String.format("namespace: %s not exist dataSource: %s",
                     namespace, clientInfo.getDsName()));
@@ -81,7 +82,8 @@ public class ClientOpsImpl implements ClientOps {
     }
 
     @Override
-    public void removeConsumerClient(String namespace, List<ClientInfo> clientInfos) {
+    public void removeConsumerClient(List<ClientInfo> clientInfos) {
+        String namespace = clientInfos.iterator().next().getNamespace();
         for (ClientInfo clientInfo : clientInfos) {
             repository.del(clientKey(namespace, clientInfo.getName()));
         }

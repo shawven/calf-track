@@ -34,7 +34,8 @@ public class ClientController {
         Integer replication = jsonObject.getInteger("replication");
 
         ClientInfo clientInfo = jsonObject.toJavaObject(ClientInfo.class);
-        clientService.addClient(namespace, clientInfo, partitions, replication);
+        clientInfo.setNamespace(namespace);
+        clientService.addClient(clientInfo, partitions, replication);
 
         return Result.success("添加成功");
     }
@@ -43,7 +44,10 @@ public class ClientController {
     public Result addAll(String namespace, @RequestBody String data) {
         log.info(data);
         List<ClientInfo> clientInfos = JSON.parseArray(data, ClientInfo.class);
-        clientInfos.forEach(clientInfo -> clientService.addClient(namespace, clientInfo, null, null));
+        clientInfos.forEach(clientInfo -> {
+            clientInfo.setNamespace(namespace);
+            clientService.addClient(clientInfo, null, null);
+        });
         return Result.success("添加成功");
     }
 
@@ -103,7 +107,8 @@ public class ClientController {
 
     @RequestMapping(value = "/delete", method = POST)
     public Result delete(String namespace, @RequestBody ClientInfo clientInfo) {
-        clientService.deleteClient(namespace, clientInfo);
+        clientInfo.setNamespace(namespace);
+        clientService.deleteClient(clientInfo);
         return Result.success("删除成功!");
     }
 

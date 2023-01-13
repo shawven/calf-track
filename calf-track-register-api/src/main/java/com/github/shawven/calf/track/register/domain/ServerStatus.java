@@ -3,7 +3,7 @@ package com.github.shawven.calf.track.register.domain;
 
 import lombok.Data;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author xw
@@ -12,9 +12,20 @@ import java.util.Set;
 @Data
 public class ServerStatus {
 
+    /**
+     * 机器节点
+     */
+    private String machine;
+
+    /**
+     * ip
+     */
     private String ip;
 
-    private Set<String> activeDsCount;
+    /**
+     * 激活的数据源
+     */
+    private List<String> activeDsNames;
 
     private long totalEventCount;
 

@@ -16,13 +16,14 @@ public class InsertRows extends BaseRows {
 
     private List<Map<String, Object>> rowMaps;
 
-    public InsertRows() {
+
+    public InsertRows(String namespace, String dsName, String destQueue, String database, String table) {
+        super(namespace, dsName, destQueue, EventAction.INSERT, database, table);
     }
 
-    public InsertRows(BaseRows baseRows, List<Map<String, Object>> rowMaps) {
-        super(baseRows.getDsName(), baseRows.getEventAction(), baseRows.getDatabase(), baseRows.getTable());
-        super.setEventAction(EventAction.INSERT);
-        this.rowMaps = rowMaps;
+    public static InsertRows convertForm(BaseRows baseRows) {
+        return new InsertRows(baseRows.getNamespace(), baseRows.getDsName(),
+                baseRows.getDestQueue(), baseRows.getDatabase(), baseRows.getTable());
     }
 
     public List<Map<String, Object>> getRowMaps() {

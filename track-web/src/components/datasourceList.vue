@@ -1,26 +1,17 @@
 <script src="../api/api.js"></script>
 <template>
   <div>
-    <el-button
-      style="float:right; margin-right: 70px;"
-      @click="showCreator">添加数据源</el-button>
+    <el-button type="primary" size="small" style="float:right; margin-right: 70px;" @click="showCreator">添加数据源</el-button>
     <div style="float:right; margin-right: 50px; ">
       <span>刷新间隔</span>
-      <el-select
-        style="width: 80px; margin-left: 20px;"
-        v-model="refreshInterval"
-        placeholder="请选择">
-        <el-option
-          v-for="item in refreshOptions"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value">
-        </el-option>
+      <el-select style="width: 80px; margin-left: 20px;" v-model="refreshInterval" placeholder="请选择">
+        <el-option v-for="item in refreshOptions" :key="item.value" :label="item.label" :value="item.value"></el-option>
       </el-select>
     </div>
 
     <el-table :data="datasourceList">
       <el-table-column prop="name" label="名称" align="center"/>
+      <el-table-column prop="machine" label="运行机器" align="center"/>
       <el-table-column prop="destQueue" label="目标队列" align="center"/>
       <el-table-column prop="dataSourceType" label="数据源类型" align="center"/>
       <el-table-column prop="dataSourceUrl" label="url" align="center"/>
@@ -32,33 +23,25 @@
       </el-table-column>
       <el-table-column label="操作" align="center" min-width="150px">
         <template slot-scope="scope">
-          <el-button
-            v-if="!scope.row.active"
-            @click="clickStart(scope.row.name)">
-            开启
-          </el-button>
-          <el-button
-            v-if="scope.row.active"
-            @click="handleStopDatasource(scope.row.name)">关闭
-          </el-button>
-          <el-button
-            v-if="!scope.row.active"
-            @click="showEditor(scope.row)">修改
-          </el-button>
-          <el-button
-            v-if="!scope.row.active"
-            @click="handleRemoveDatasource(scope.row.name)">移除
-          </el-button>
+          <el-button type="primary" size="small"  v-if="!scope.row.active" @click="clickStart(scope.row.name)">开启</el-button>
+          <el-button type="info" size="small"  v-if="scope.row.active" @click="handleStopDatasource(scope.row.name)">关闭</el-button>
+          <el-button type="warning" size="small"  v-if="!scope.row.active" @click="showEditor(scope.row)">修改</el-button>
+          <el-button type="danger" size="small" v-if="!scope.row.active" @click="handleRemoveDatasource(scope.row.name)">移除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <div style="padding: 40px 0;">
-    </div>
+    <div style="padding: 40px 0;"></div>
 
     <el-table :data="serviceStatusList">
+      <el-table-column prop="machine" label="机器节点" align="center"/>
       <el-table-column prop="ip" label="IP" align="center"/>
-      <el-table-column prop="activeDsCount" label="有效的命名空间" align="center"/>
+      <el-table-column prop="activeDs" label="数据源" align="center" width="250px">
+        <template slot-scope="scope">
+          <el-tag v-for="activeDsName in scope.row.activeDsNames" :key="activeDsName"
+                  effect="plain" style="margin: 0 5px">{{activeDsName}}</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column prop="totalEventCount" label="Event总数量" align="center"/>
       <el-table-column prop="latelyEventCount" label="Event间隔数量" align="center"/>
       <el-table-column prop="totalPublishCount" label="Publish总数量" align="center"/>
@@ -67,25 +50,18 @@
     </el-table>
 
     <el-dialog width="40%" :title="editorTitle" :visible.sync="editorVisible">
-      <el-form :rules="rules" ref="ruleForm" class="persist-datasource-form" label-width="150px"
-               :model="persistDatasource">
-        <el-form-item label="名称" prop="name" style="width: 50%">
-          <el-input class="form-input" v-model="persistDatasource.name"/>
+      <el-form :rules="rules" ref="ruleForm" class="persist-datasource-form" label-width="150px" :model="persistDatasource">
+        <el-form-item label="名称" prop="name">
+          <el-input class="form-input" v-model="persistDatasource.name" :disabled="isEdit"/>
         </el-form-item>
         <el-form-item label="数据源类型" prop="dataSourceType">
-          <el-select v-model="persistDatasource.dataSourceType" placeholder="请选择">
-            <el-option v-for="item in dataSourceTyepOptions"
-                       :key="item.value"
-                       :label="item.label"
-                       :value="item.value"/>
+          <el-select v-model="persistDatasource.dataSourceType" style="width: 100%" placeholder="请选择">
+            <el-option v-for="item in dataSourceTypeOptions" :key="item.value" :label="item.label" :value="item.value"/>
           </el-select>
         </el-form-item>
         <el-form-item label="目标队列" prop="dataSourceType">
-          <el-select v-model="persistDatasource.destQueue" placeholder="请选择">
-            <el-option v-for="item in destQueues"
-                       :key="item.value"
-                       :label="item.label"
-                       :value="item.value"/>
+          <el-select v-model="persistDatasource.destQueue" style="width: 100%" placeholder="请选择">
+            <el-option v-for="item in destQueues" :key="item.value" :label="item.label" :value="item.value"/>
           </el-select>
         </el-form-item>
         <el-form-item label="连接URL" prop="dataSourceUrl">
@@ -100,17 +76,10 @@
     </el-dialog>
 
     <el-dialog width="30%" title="开启数据源" :visible.sync="startVisible">
-      <el-form ref="ruleForm" class="persist-datasource-form" label-width="150px" :model="persistDatasource">
+      <el-form ref="ruleForm" class="persist-datasource-form" label-width="80px" :model="persistDatasource">
         <el-form-item label="指定IP" prop="name">
-          <el-select
-            style=";"
-            v-model="startDataSourceParams.delegatedIp"
-            placeholder="请选择">
-            <el-option
-              v-for="item in serviceStatusList"
-              :key="item.ip"
-              :label="item.ip"
-              :value="item.ip">
+          <el-select  v-model="startDataSourceParams.delegatedIp" placeholder="请选择" style="width: 100%">
+            <el-option v-for="item in serviceStatusList" :key="item.ip" :label="item.machine" :value="item.ip" >
             </el-option>
           </el-select>
         </el-form-item>
@@ -134,6 +103,7 @@
         serviceStatusList: [],
         editorTitle: "添加数据源",
         editorVisible: false,
+        isEdit: false,
         startVisible: false,
         persistDatasource: {
           name: null,
@@ -146,7 +116,7 @@
           dataSourceType: 'MongoDB',
           dataSourceUrl: 'mongodb://root:root@localhost:27017/?replicaSet=replicaset&authSource=admin',
         },
-        dataSourceTyepOptions: [{
+        dataSourceTypeOptions: [{
           value: 'MongoDB',
           label: 'MongoDB'
         }],
@@ -200,17 +170,22 @@
       },
       showCreator() {
         this.editorVisible = true
+        this.isEdit = false;
         this.persistDatasource = {...this.defaultPersistDatasource}
         this.editorTitle = "添加数据源";
       },
       showEditor(row) {
         this.editorVisible = true
+        this.isEdit = true;
         this.persistDatasource = row
         this.editorTitle = "修改数据源";
       },
       clickStart(name) {
         this.startVisible = true;
         this.startDataSourceParams.name = name;
+        if (this.serviceStatusList.length === 1) {
+          this.startDataSourceParams.delegatedIp = this.serviceStatusList[0]
+        }
       },
       handleStartDatasource(){
         this.startVisible = false;

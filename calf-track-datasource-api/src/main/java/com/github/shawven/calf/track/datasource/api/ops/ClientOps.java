@@ -19,9 +19,9 @@ public interface ClientOps {
 
     List<ClientInfo> listConsumerClientsByKey(String namespace, String clientInfoKey);
 
-    void addConsumerClient(String namespace, ClientInfo clientInfo);
+    void addConsumerClient(ClientInfo clientInfo);
 
-    void removeConsumerClient(String namespace, List<ClientInfo> clientInfos);
+    void removeConsumerClient(List<ClientInfo> clientInfos);
 
     boolean sendCommand(Command command);
 

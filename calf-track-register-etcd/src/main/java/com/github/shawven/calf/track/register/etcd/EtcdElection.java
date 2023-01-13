@@ -61,7 +61,7 @@ class EtcdElection implements Election {
     @Override
     public void start() {
         String name = this.name;
-        ByteSequence elect = ByteSequence.from(path, UTF_8);
+        ByteSequence elect = ByteSequence.from(path + "/" + name, UTF_8);
         ByteSequence proposal = ByteSequence.from(name, UTF_8);
 
         logger.info("{} start elect", name);
@@ -117,7 +117,7 @@ class EtcdElection implements Election {
             }
 
             if (requeue) {
-                logger.info("{} prepare enqueue", name);
+                logger.info("{} prepare enqueue after 3 seconds", name);
                 Uninterruptibles.sleepUninterruptibly(3, TimeUnit.SECONDS);
                 start();
             }

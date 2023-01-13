@@ -1,32 +1,32 @@
 <template>
   <div>
-    <div>
-      <el-button
-        style="float:right; margin-right: 70px;"
-        @click="addClientVisible = true">添加应用</el-button>
+    <div style="margin-bottom: 10px; margin-right: 50px; display: flex; justify-content: flex-end">
+      <el-button type="primary" size="small" @click="addClientVisible = true">
+        添加应用
+      </el-button>
     </div>
 
     <el-collapse v-model="activeClientGroup">
       <el-collapse-item v-for="(clientList, groupKey) in clientMap" :key="groupKey" :name="groupKey">
         <template slot="title">
-          <div style="text-align: left; font-size: 18px;">
-            {{groupKey}}
-          </div>
+          <span style="font-size: 18px;">{{groupKey}}</span>
         </template>
-        <div style="text-align: right; padding-right: 50px;">
-          <el-button type="danger" @click="handleDeleteTopic(groupKey)">删除通道topic</el-button>
-        </div>
-        <el-table
-          :data="clientList">
+        <el-table :data="clientList">
           <el-table-column prop="name" label="应用名称" align="center"></el-table-column>
-          <el-table-column prop="dsName" label="命名空间" align="center"></el-table-column>
-          <el-table-column prop="databaseName" label="数据库" align="center"></el-table-column>
+          <el-table-column prop="dsName" label="数据源" align="center"></el-table-column>
+          <el-table-column prop="dbName" label="数据库" align="center"></el-table-column>
           <el-table-column prop="tableName" label="表" align="center"></el-table-column>
-          <el-table-column prop="eventAction" label="动作" align="center"></el-table-column>
+          <el-table-column  label="动作" align="center" width="260">
+            <template slot-scope="scope">
+              <el-tag v-for="eventAction in scope.row.eventActions" :key="eventAction" effect="plain" style="margin: 0 5px">
+                {{eventAction}}
+              </el-tag>
+            </template>
+          </el-table-column>
           <el-table-column prop="queueType" label="队列类型" align="center"></el-table-column>
           <el-table-column label="操作" align="center">
             <template slot-scope="scope">
-              <el-button @click="deleteClient(scope.row)">删除</el-button>
+              <el-button type="danger" size="small" @click="deleteClient(scope.row)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -50,8 +50,8 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item prop="databaseName" label="数据库">
-          <el-input v-model="client.databaseName" class="auto"></el-input>
+        <el-form-item prop="dbName" label="数据库">
+          <el-input v-model="client.dbName" class="auto"></el-input>
         </el-form-item>
         <el-form-item prop="tableName" label="表名">
           <el-input v-model="client.tableName" class="auto" ></el-input>
@@ -79,8 +79,8 @@
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="emitClose">取 消</el-button>
-        <el-button type="primary" @click="addclient('ruleForm')">确 定</el-button>
+        <el-button @click="addClientVisible = false">取 消</el-button>
+        <el-button type="primary" size="small" @click="addclient('ruleForm')">确 定</el-button>
       </div>
     </el-dialog>
 
@@ -100,7 +100,7 @@ import {addClient, deleteClient, getClientMap, deleteTopic, getDatasourceNames} 
         client: {
           name: '',
           dsName: '',
-          databaseName: '',
+          dbName: '',
           tableName: '',
           eventActions: ['INSERT', 'UPDATE', 'DELETE'],
           queueType: 'rabbit',
@@ -110,7 +110,7 @@ import {addClient, deleteClient, getClientMap, deleteTopic, getDatasourceNames} 
         rules: {
           name: [{required: true, message: '请输入应用名称', trigger: 'blur'}],
           dsName: [{required: true, message: '请选择数据源', trigger: 'blur'}],
-          databaseName: [{required: true, message: '请输入数据库名', trigger: 'blur'}],
+          dbName: [{required: true, message: '请输入数据库名', trigger: 'blur'}],
           tableName: [{required: true, message: '请输入表名', trigger: 'blur'}],
           eventActions: [{required: true, message: '请勾选事件类型', trigger: 'blur'}],
           queueType: [{required: true, message: '请选择队列类型', trigger: 'blur'}]
@@ -128,12 +128,12 @@ import {addClient, deleteClient, getClientMap, deleteTopic, getDatasourceNames} 
       },
       deleteClient(client){
         deleteClient(client).then(data=>{
-          if(data.code=="success"){
+          if(data.code == "success"){
             this.$message({
               type: 'success',
               message: '删除成功'
             })
-            this.list()
+            this.listClientMap()
           }else {
             this.$message.error("删除失败：", data.msg)
           }
@@ -167,6 +167,8 @@ import {addClient, deleteClient, getClientMap, deleteTopic, getDatasourceNames} 
                   type: 'success',
                   message: '添加成功'
                 })
+                this.addClientVisible = false;
+                this.listClientMap()
               }
               else {
                 this.$message.error("添加失败：", res.data.msg)

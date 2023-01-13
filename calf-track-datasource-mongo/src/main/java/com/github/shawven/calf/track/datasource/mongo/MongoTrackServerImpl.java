@@ -14,10 +14,14 @@ import com.github.shawven.calf.track.register.domain.DataSourceCfg;
 import com.github.shawven.calf.track.register.domain.ServerStatus;
 import com.github.shawven.calf.track.register.election.Election;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author xw
@@ -41,6 +45,10 @@ public class MongoTrackServerImpl extends AbstractTrackServer {
 
     private final Map<String, Election> electionMap = new ConcurrentHashMap<>();
 
+    private final Map<String, Long> activeDsNames = new ConcurrentHashMap<>();
+
+    private final AtomicLong activeDsNumber = new AtomicLong();
+
     public MongoTrackServerImpl(OpLogClientFactory opLogClientFactory, ElectionFactory electionFactory,
                                 DataSourceCfgOps dataSourceCfgOps, ClientOps clientOps, StatusOps statusOps,
                                 DataPublisher dataPublisherManager) {
@@ -57,31 +65,36 @@ public class MongoTrackServerImpl extends AbstractTrackServer {
     }
 
     @Override
-    public void doStart(DataSourceCfg dataSourceCfg) {
+    public void doStart(DataSourceCfg dsCfg) {
         executorService.submit(() -> {
             String path = PathKey.concat(Const.LEADER);
-            String namespace = dataSourceCfg.getNamespace();
-            String name = dataSourceCfg.getName();
+            String namespace = dsCfg.getNamespace();
+            String processName = dsCfg.getName() + ":" + ManagementFactory.getRuntimeMXBean().getName();
 
-            OplogElectionListener listener = new OplogElectionListener(dataSourceCfg,
+            OplogElectionListener listener = new OplogElectionListener(dsCfg,
                     opLogClientFactory, statusOps, clientOps, dataSourceCfgOps, dataPublisherManager);
 
-            Election election = electionFactory.getElection(path, namespace, name, 20L, listener);
+            Election election = electionFactory.getElection(path, namespace, processName, 20L, listener);
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 logger.info("shutdownHook trigger close");
                 election.close();
-            }));
+            }, "TrackServer"));
 
-            electionMap.put(namespace + "-" + name, election);
+            electionMap.put(namespace + "-" + dsCfg.getName(), election);
+
             election.start();
+
+            activeDsNames.put(namespace + "#" + dsCfg.getName(), activeDsNumber.incrementAndGet());
         });
     }
 
     @Override
     public void doStop(String namespace, String name) {
+        activeDsNames.remove(namespace + "#" + name);
         Election election = electionMap.get(namespace + "-" + name);
-        if(election != null) {
+
+        if (election != null) {
             election.close();
         }
     }
@@ -90,16 +103,27 @@ public class MongoTrackServerImpl extends AbstractTrackServer {
     protected void updateServerStatus() {
         scheduledExecutorService.scheduleWithFixedDelay(() -> {
             ServerStatus serverStatus = new ServerStatus();
-            String localIp = TYPE + ":" + NetUtils.getLocalAddress().getHostAddress();
-            serverStatus.setIp(localIp);
+            serverStatus.setMachine(ManagementFactory.getRuntimeMXBean().getName());
+            serverStatus.setIp(NetUtils.getLocalAddress().getHostAddress());
+            serverStatus.setActiveDsNames(getSortedActiveDsNames());
             serverStatus.setTotalEventCount(opLogClientFactory.getEventCount());
             serverStatus.setLatelyEventCount(opLogClientFactory.eventCountSinceLastTime());
             serverStatus.setTotalPublishCount(dataPublisherManager.getPublishCount());
             serverStatus.setLatelyPublishCount(dataPublisherManager.publishCountSinceLastTime());
             serverStatus.setUpdateTime(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
 
-            statusOps.updateServerStatus(localIp, serverStatus);
-            logger.info("updateInstanceStatus: [{}]", serverStatus);
-        }, 10, 20, TimeUnit.SECONDS);
+            String key = serverStatus.getMachine() + "-" + TYPE;
+            statusOps.updateServerStatus(key, serverStatus);
+
+            logger.debug("updateInstanceStatus: [{}]", serverStatus);
+        }, 0, 5, TimeUnit.SECONDS);
+    }
+
+    private List<String> getSortedActiveDsNames() {
+        TreeMap<Long, String> treeMap = new TreeMap<>();
+        activeDsNames.forEach((key, val) -> {
+            treeMap.put(val, key.split("#")[1]);
+        });
+        return new ArrayList<>(treeMap.values());
     }
 }

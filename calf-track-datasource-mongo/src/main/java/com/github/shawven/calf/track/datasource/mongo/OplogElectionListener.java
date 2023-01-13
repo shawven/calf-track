@@ -2,6 +2,7 @@ package com.github.shawven.calf.track.datasource.mongo;
 
 import com.github.shawven.calf.track.common.EventAction;
 import com.github.shawven.calf.track.datasource.api.DataPublisher;
+import com.github.shawven.calf.track.datasource.api.NetUtils;
 import com.github.shawven.calf.track.datasource.api.domain.BaseRows;
 import com.github.shawven.calf.track.datasource.api.ops.ClientOps;
 import com.github.shawven.calf.track.datasource.api.ops.DataSourceCfgOps;
@@ -15,6 +16,7 @@ import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.management.ManagementFactory;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -63,20 +65,21 @@ public class OplogElectionListener implements ElectionListener {
     public void isLeader() {
         oplogClient = opLogClientFactory.initClient(dataSourceCfg);
         String namespace = dataSourceCfg.getNamespace();
-        String name = dataSourceCfg.getName();
+        String dsName = dataSourceCfg.getName();
+        String destQueue = dataSourceCfg.getDestQueue();
 
         // 更新关注的事件
-        updateWatchedEvents(clientOps.listConsumerClientsByNamespaceAndName(namespace, name));
+        updateWatchedEvents(clientOps.listConsumerClientsByNamespaceAndName(namespace, dsName));
 
         // 监听Client列表变化，更新关注的事件
         clientOps.watcherClientInfo(dataSourceCfg, this::updateWatchedEvents);
 
-        OpLogEventFormatterFactory formatterFactory = new OpLogEventFormatterFactory(namespace);
+        OpLogEventFormatterFactory formatterFactory = new OpLogEventFormatterFactory(namespace, dsName, destQueue);
 
         // 启动连接
         try {
             disposable = oplogClient.getOplog().subscribe(document -> {
-                opLogClientFactory.eventCount.incrementAndGet();
+                opLogClientFactory.incEventCount();
 
                 // 获取数据格式器
                 String eventType = document.getString(OpLogClientFactory.EVENTTYPE_KEY);
@@ -89,6 +92,7 @@ public class OplogElectionListener implements ElectionListener {
                 updateOpLogStatus(document);
             });
             dataSourceCfg.setActive(true);
+            dataSourceCfg.setMachine(ManagementFactory.getRuntimeMXBean().getName());
             dataSourceCfg.setVersion(dataSourceCfg.getVersion() + 1);
             dataSourceCfgOps.update(dataSourceCfg);
         } catch (Exception e) {
@@ -104,6 +108,7 @@ public class OplogElectionListener implements ElectionListener {
         }
 
         dataSourceCfg.setActive(false);
+        dataSourceCfg.setMachine("");
         dataSourceCfgOps.update(dataSourceCfg);
         opLogClientFactory.closeClient(oplogClient, dataSourceCfg);
     }
@@ -124,9 +129,6 @@ public class OplogElectionListener implements ElectionListener {
             logger.debug("uninterested:{}", event);
             return;
         }
-
-        // 设置目标队列
-        formatData.setDestQueue(dataSourceCfg.getDestQueue());
 
         try {
             dataPublisher.publish(formatData);
@@ -186,6 +188,6 @@ public class OplogElectionListener implements ElectionListener {
     }
 
     private String getEventKey(ClientInfo clientInfo) {
-        return clientInfo.getDatabaseName().concat("/").concat(clientInfo.getTableName());
+        return clientInfo.getDbName().concat("/").concat(clientInfo.getTableName());
     }
 }

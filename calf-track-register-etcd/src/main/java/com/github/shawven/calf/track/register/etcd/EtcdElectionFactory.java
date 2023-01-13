@@ -12,8 +12,6 @@ import io.etcd.jetcd.Client;
  */
 public class EtcdElectionFactory implements ElectionFactory {
 
-    private static final String DEFAULT_PATH = "/leader-selector/";
-
     private final Client client;
 
     public EtcdElectionFactory(Client client) {

@@ -17,13 +17,13 @@ public class UpdateRows extends BaseRows implements Serializable {
 
     private List<Row> rows;
 
-    public UpdateRows() {
+    public UpdateRows(String namespace, String dsName, String destQueue, String database, String table) {
+        super(namespace, dsName, destQueue, EventAction.UPDATE, database, table);
     }
 
-    public UpdateRows(BaseRows baseRows, List<Row> rows) {
-        super(baseRows.getDsName(), baseRows.getEventAction(), baseRows.getDatabase(), baseRows.getTable());
-        super.setEventAction(EventAction.UPDATE);
-        this.rows = rows;
+    public static UpdateRows convertForm(BaseRows baseRows) {
+        return new UpdateRows(baseRows.getNamespace(), baseRows.getDsName(),
+                baseRows.getDestQueue(), baseRows.getDatabase(), baseRows.getTable());
     }
 
     public List<Row> getRows() {

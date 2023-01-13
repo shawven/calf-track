@@ -18,19 +18,34 @@ public class DataSubscriberMethodAdapter implements DataSubscribeHandler {
 
     private final Object bean;
     private final Method method;
-    private final String key;
+    private final DataSubscriber ann;
     private final EventAction[] actions;
 
     public DataSubscriberMethodAdapter(Object bean, Method method, DataSubscriber ann) {
         this.bean = bean;
         this.method = method;
-        this.key = Const.PREFIX + "_" + ann.name() + "_" + ann.database() + "_" + ann.table();
+        this.ann = ann;
         this.actions = ann.actions();
     }
 
     @Override
-    public String key() {
-        return key;
+    public String namespace() {
+        return ann.namespace();
+    }
+
+    @Override
+    public String dataSource() {
+        return ann.dataSource();
+    }
+
+    @Override
+    public String database() {
+        return ann.database();
+    }
+
+    @Override
+    public String table() {
+        return ann.table();
     }
 
     @Override

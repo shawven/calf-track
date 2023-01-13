@@ -105,7 +105,7 @@ class ZkElection implements Election {
         }
 
         if (requeue) {
-            logger.info("{} prepare enqueue", name);
+            logger.info("{} prepare enqueue after 3 seconds", name);
             Uninterruptibles.sleepUninterruptibly(3, TimeUnit.SECONDS);
             start();
         }

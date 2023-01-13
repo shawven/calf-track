@@ -14,11 +14,38 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DataSubscriber {
 
-    String name() default Const.NAMESPACE;
+    /**
+     * 命名空间(数据隔离)
+     *
+     * @return
+     */
+    String namespace() default Const.NAMESPACE;
 
+    /**
+     * 数据源
+     *
+     * @return
+     */
+    String dataSource();
+
+    /**
+     * 数据库
+     *
+     * @return
+     */
     String database();
 
+    /**
+     * 表
+     *
+     * @return
+     */
     String table();
 
+    /**
+     * 事件动作
+     *
+     * @return
+     */
     EventAction[] actions();
 }

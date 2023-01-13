@@ -23,19 +23,24 @@ public class ClientInfo implements Serializable {
     private String name;
 
     /**
+     * 名称
+     */
+    private String namespace;
+
+    /**
      * 队列实现方式 默认为redis
      */
     private String queueType;
 
     /**
-     * 关注的数据库的标识
+     * 关注的数据源的名称
      */
     private String dsName;
 
     /**
      * 关注的数据库名
      */
-    private String databaseName;
+    private String dbName;
 
     /**
      * 关注的表名
@@ -48,20 +53,11 @@ public class ClientInfo implements Serializable {
     private List<EventAction> eventActions;
 
     /**
-     * 拼接key，避免频繁拼接
+     * 拼接key
+     *
+     * @return
      */
-    private String key;
-
-
-    public ClientInfo(String name, String queueType,
-                      String dsName, String databaseName,
-                      String tableName, List<EventAction> eventActions) {
-        this.name = name;
-        this.queueType = queueType;
-        this.dsName = dsName == null ? Const.NAMESPACE : dsName;
-        this.databaseName = databaseName;
-        this.tableName = tableName;
-        this.eventActions = eventActions;
-        this.key = this.dsName + "_" + databaseName + "_" + tableName;
+    public String getKey() {
+        return Const.uniqueKey(namespace, dsName, dbName, tableName);
     }
 }

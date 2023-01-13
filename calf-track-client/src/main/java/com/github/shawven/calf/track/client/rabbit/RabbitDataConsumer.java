@@ -38,9 +38,10 @@ public class RabbitDataConsumer implements DataConsumer {
     public void startConsumers(String clientId, Map<String, DataSubscribeHandler> handlerMap) {
         for (Map.Entry<String, DataSubscribeHandler> entry : handlerMap.entrySet()) {
             try {
-                consume(clientId, entry.getKey(), entry.getValue());
+                String key = entry.getKey();
+                consume(key + "@" + clientId, Const.withEventQueue(key), entry.getValue());
             } catch (IOException e) {
-                logger.error("subscribe failed :" + e.getMessage(), e);
+                logger.error("RabbitDataConsumer subscribe failed :" + e.getMessage(), e);
             }
         }
     }

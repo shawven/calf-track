@@ -46,9 +46,9 @@ public class ClientServiceImpl implements ClientService {
 //    private KafkaService kafkaService;
 
     @Override
-    public void addClient(String namespace, ClientInfo clientInfo, Integer partitions, Integer replication) {
+    public void addClient(ClientInfo clientInfo, Integer partitions, Integer replication) {
 
-        clientOps.addConsumerClient(namespace, clientInfo);
+        clientOps.addConsumerClient(clientInfo);
 
         if (Const.QUEUE_TYPE_KAFKA.equals(clientInfo.getQueueType())) {
 //            kafkaService.createKafkaTopic(clientInfo, partitions, replication);
@@ -83,8 +83,8 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public void deleteClient(String namespace, ClientInfo clientInfo) {
-        clientOps.removeConsumerClient(namespace, Collections.singletonList(clientInfo));
+    public void deleteClient(ClientInfo clientInfo) {
+        clientOps.removeConsumerClient(Collections.singletonList(clientInfo));
     }
 
     @Override
@@ -153,7 +153,7 @@ public class ClientServiceImpl implements ClientService {
         List<ClientInfo> clientInfos = clientOps.listConsumerClientsByKey(namespace, clientInfoKey);
 
         // 从EventHandler的发送列表中删除
-        clientOps.removeConsumerClient(namespace, clientInfos);
+        clientOps.removeConsumerClient(clientInfos);
 
         // 刪除对应队列中的topic
         Set<String> clientInfoSet = new HashSet<>();

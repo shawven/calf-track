@@ -1,6 +1,8 @@
 package com.github.shawven.calf.track.client;
 
 
+import com.github.shawven.calf.track.client.annotation.DataListenerAnnotationBeanPostProcessor;
+import com.github.shawven.calf.track.common.Const;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.slf4j.Logger;
@@ -31,10 +33,16 @@ public class DataSubscribeRegistry implements SmartLifecycle {
 
     private volatile boolean running;
 
-    public DataSubscribeRegistry registerHandler(DataSubscribeHandler handler) {
-        logger.info("registerHandler key: {}, actions:{}", handler.key(), Arrays.toString(handler.actions()));
-        HANDLER_MAP.put(handler.key(), handler);
-        return this;
+    /**
+     * 注册处理器
+     *
+     * @see DataListenerAnnotationBeanPostProcessor
+     * @param handler
+     */
+    public void registerHandler(DataSubscribeHandler handler) {
+        String key = Const.uniqueKey(handler.namespace(), handler.dataSource(), handler.database(), handler.table());
+        logger.info("registerHandler key: {}, actions:{}", key, Arrays.toString(handler.actions()));
+        HANDLER_MAP.put(key, handler);
     }
 
     /**

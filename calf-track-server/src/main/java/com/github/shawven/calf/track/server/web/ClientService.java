@@ -16,7 +16,7 @@ public interface ClientService {
      * @param namespace
      * @param clientInfo
      */
-    void addClient(String namespace, ClientInfo clientInfo, Integer partitions, Integer replication);
+    void addClient(ClientInfo clientInfo, Integer partitions, Integer replication);
 
     /**
      * 客户端订阅信息
@@ -42,7 +42,7 @@ public interface ClientService {
      * 删除服务器端及本地client信息
      * @param clientInfo
      */
-    void deleteClient(String namespace, ClientInfo clientInfo);
+    void deleteClient( ClientInfo clientInfo);
 
     /**
      * 获取日志文件状态：日志读到哪个文件的第几行

@@ -1,6 +1,7 @@
 package com.github.shawven.calf.track.datasource.api.domain;
 
 
+import com.github.shawven.calf.track.common.Const;
 import com.github.shawven.calf.track.common.EventAction;
 import lombok.Data;
 
@@ -22,34 +23,49 @@ public class BaseRows implements Serializable {
     private String uuid = UUID.randomUUID().toString();
 
     /**
+     * 命名空间
+     */
+    private String namespace;
+
+    /**
+     * 数据源的名称
+     */
+    private String dsName;
+
+    /**
      * 目标队列
      */
     private String destQueue;
 
     /**
-     * 时间动作
+     * 事件动作
      */
     private EventAction eventAction;
 
+    /**
+     * 数据库
+     */
     private String database;
 
+    /**
+     * 表名
+     */
     private String table;
 
-    private String dsName;
 
-    private Long timestamp = System.currentTimeMillis();
+    private long timestamp = System.currentTimeMillis();
 
-    public BaseRows() {
-    }
 
-    public BaseRows(String dsName, EventAction eventAction, String database, String table) {
+    public BaseRows(String namespace, String dsName, String destQueue, EventAction eventAction, String database, String table) {
+        this.namespace = namespace;
         this.dsName = dsName;
+        this.destQueue = destQueue;
         this.eventAction = eventAction;
         this.database = database;
         this.table = table;
     }
 
     public String key() {
-        return dsName + "_" + database + "_" + table;
+        return Const.uniqueKey(namespace, dsName, database, table);
     }
 }

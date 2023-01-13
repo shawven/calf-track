@@ -16,11 +16,20 @@ public class ExampleHandlers {
     private static final Logger logger = LoggerFactory.getLogger(ExampleHandlers.class);
 
     @DataSubscriber(
-            name = "default",
+            dataSource = "mongo_local",
+            database = "test",
+            table = "t_user",
+            actions = {EventAction.INSERT, EventAction.UPDATE, EventAction.DELETE})
+    public void handle1(String data) {
+        logger.info("handle1 接收信息:" + data);
+    }
+
+    @DataSubscriber(
+            dataSource = "mongo_dev",
             database = "test",
             table = "t_user",
             actions = {EventAction.INSERT, EventAction.UPDATE, EventAction.DELETE})
     public void handle2(String data) {
-        logger.info("接收信息:" + data);
+        logger.info("handle2 接收信息:" + data);
     }
 }

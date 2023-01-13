@@ -17,9 +17,11 @@ public class Command {
 
     private Type type;
 
+    public Command() {}
+
     public Command(String namespace, String name, Type type) {
-        this.name = name;
         this.namespace = namespace;
+        this.name = name;
         this.type = type;
     }
 

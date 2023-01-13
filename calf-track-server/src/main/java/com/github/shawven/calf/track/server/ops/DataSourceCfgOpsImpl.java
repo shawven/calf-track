@@ -64,7 +64,7 @@ public class DataSourceCfgOpsImpl implements DataSourceCfgOps {
                     newConfig.getNamespace(),  newConfig.getName()));
         }
         String key = PathKey.concat(Const.DATA_SOURCE, dataSourceCfg.getNamespace(), dataSourceCfg.getName());
-        repository.set(key, JSON.toJSONString(dataSourceCfg));
+        repository.set(key, JSON.toJSONString(newConfig));
 
         return true;
     }
@@ -79,7 +79,6 @@ public class DataSourceCfgOpsImpl implements DataSourceCfgOps {
     public DataSourceCfg get(String namespace, String name) {
         String string = repository.get(PathKey.concat(Const.DATA_SOURCE, namespace, name));
         return JSON.parseObject(string, DataSourceCfg.class);
-
     }
 
     @Override
@@ -122,13 +121,12 @@ public class DataSourceCfgOpsImpl implements DataSourceCfgOps {
             @Override
             public void onError(Throwable throwable) {
                 logger.error("watch command error.", throwable);
-                CompletableFuture.runAsync(() ->  registerServerWatcher(watcher));
+                CompletableFuture.runAsync(() -> registerServerWatcher(watcher));
             }
 
             @Override
             public void onComplete() {
                 logger.info("watch command completed.");
-                CompletableFuture.runAsync(() ->  registerServerWatcher(watcher));
             }
         });
     }

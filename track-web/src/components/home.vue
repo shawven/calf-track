@@ -3,7 +3,7 @@
   <el-container>
     <el-header style="display: flex; justify-content: space-between;">
       <div>
-        <h2 class="header">binLog</h2>
+        <h2 class="header">track-web</h2>
       </div>
       <el-select v-model="namespace" placeholder="请选择" @change="reload">
         <el-option
@@ -25,10 +25,10 @@
     <el-container>
       <el-aside width="200px">
         <el-menu  router default-active="clientList">
+          <el-menu-item index="datasourceList" route="" >数据源列表</el-menu-item>
           <el-menu-item index="clientList" route="">应用列表</el-menu-item>
           <el-menu-item index="queueMonitoring" route="" >队列监控</el-menu-item>
           <el-menu-item index="logProgress" route="" >日志进度</el-menu-item>
-          <el-menu-item index="datasourceList" route="" >数据源管理</el-menu-item>
         </el-menu>
       </el-aside>
       <el-main>

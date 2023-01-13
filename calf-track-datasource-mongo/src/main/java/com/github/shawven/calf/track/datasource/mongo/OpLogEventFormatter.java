@@ -24,23 +24,36 @@ public interface OpLogEventFormatter {
      */
     BaseRows format(Document event);
 
+    class BaseFormatter implements OpLogEventFormatter {
 
-    class Write implements OpLogEventFormatter {
-
+        private final String namespace;
         private final String dsName;
+        private final String destQueue;
 
-        public Write(String dsName) {
+        public BaseFormatter(String namespace, String dsName, String destQueue) {
+            this.namespace = namespace;
             this.dsName = dsName;
+            this.destQueue = destQueue;
         }
 
         @Override
         public BaseRows format(Document event) {
-            InsertRows insertRows = new InsertRows();
-            insertRows.setEventAction(EventAction.INSERT);
-            //添加表信息
-            insertRows.setDatabase(DocumentUtils.getDataBase(event));
-            insertRows.setTable(DocumentUtils.getTable(event));
-            insertRows.setDsName(dsName);
+            return new BaseRows(namespace, dsName, destQueue, null,
+                    DocumentUtils.getDataBase(event), DocumentUtils.getTable(event));
+        }
+    }
+
+
+    class Write extends BaseFormatter {
+
+        public Write(String namespace, String dsName, String destQueue) {
+            super(namespace, dsName, destQueue);
+        }
+
+        @Override
+        public BaseRows format(Document event) {
+            InsertRows insertRows = InsertRows.convertForm(super.format(event));
+
             //添加列映射
             Document context = (Document) event.get(OpLogClientFactory.CONTEXT_KEY);
             List<Map<String, Object>> urs = new ArrayList<>();
@@ -50,24 +63,17 @@ public interface OpLogEventFormatter {
         }
     }
 
-    class Update implements OpLogEventFormatter {
+    class Update extends BaseFormatter {
 
-        private final String dsName;
-
-        public Update(String dsName) {
-            this.dsName = dsName;
+        public Update(String namespace, String dsName, String destQueue) {
+            super(namespace, dsName, destQueue);
         }
 
         @Override
         public BaseRows format(Document event) {
-            UpdateRows updateRows = new UpdateRows();
-            updateRows.setEventAction(EventAction.UPDATE);
-            //添加表信息
-            updateRows.setDatabase(DocumentUtils.getDataBase(event));
-            updateRows.setTable(DocumentUtils.getTable(event));
-            updateRows.setDsName(dsName);
-            //添加列映射
+            UpdateRows updateRows = UpdateRows.convertForm(super.format(event));
 
+            //添加列映射
             List<UpdateRows.Row> urs = new ArrayList<>();
             Document updateWhere = (Document)event.get(OpLogClientFactory.UPDATE_WHERE_KEY);
             Document context = (Document) event.get(OpLogClientFactory.CONTEXT_KEY);
@@ -78,22 +84,16 @@ public interface OpLogEventFormatter {
         }
     }
 
-    class Delete implements OpLogEventFormatter {
+    class Delete extends BaseFormatter {
 
-        private final String dsName;
-
-        public Delete(String dsName) {
-            this.dsName = dsName;
+        public Delete(String namespace, String dsName, String destQueue) {
+            super(namespace, dsName, destQueue);
         }
 
         @Override
         public BaseRows format(Document event) {
-            DeleteRows deleteRows = new DeleteRows();
-            deleteRows.setEventAction(EventAction.DELETE);
-            //添加表信息
-            deleteRows.setDatabase(DocumentUtils.getDataBase(event));
-            deleteRows.setTable(DocumentUtils.getTable(event));
-            deleteRows.setDsName(dsName);
+            DeleteRows deleteRows =DeleteRows.convertForm(super.format(event));
+
             //添加列映射
             Document context = (Document) event.get(OpLogClientFactory.CONTEXT_KEY);
             List<Map<String, Object>> urs = new ArrayList<>();

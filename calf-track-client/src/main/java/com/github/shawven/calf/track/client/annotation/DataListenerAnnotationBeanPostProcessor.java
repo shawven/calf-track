@@ -46,9 +46,7 @@ public class DataListenerAnnotationBeanPostProcessor implements SmartInitializin
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
         Map<Method, DataSubscriber> annotatedMethods = MethodIntrospector.selectMethods(bean.getClass(),
                 (MethodIntrospector.MetadataLookup<DataSubscriber>) method -> {
-                    DataSubscriber annotation = AnnotatedElementUtils.getMergedAnnotation(
-                            method, DataSubscriber.class);
-                    return annotation;
+                    return AnnotatedElementUtils.getMergedAnnotation(method, DataSubscriber.class);
                 });
         // 处理注解方法
         if (!annotatedMethods.isEmpty()) {

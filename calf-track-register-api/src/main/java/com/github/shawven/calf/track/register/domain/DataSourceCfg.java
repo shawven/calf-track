@@ -35,6 +35,11 @@ public class DataSourceCfg {
     private volatile boolean active;
 
     /**
+     * 运行机器
+     */
+    private String machine;
+
+    /**
      * 目标队列
      */
     private String destQueue;

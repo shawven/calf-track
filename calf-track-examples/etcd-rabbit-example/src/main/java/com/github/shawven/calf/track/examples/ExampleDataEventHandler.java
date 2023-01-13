@@ -1,6 +1,7 @@
 package com.github.shawven.calf.track.examples;
 
 import com.github.shawven.calf.track.client.DataSubscribeHandler;
+import com.github.shawven.calf.track.common.Const;
 import com.github.shawven.calf.track.common.EventAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +25,18 @@ public class ExampleDataEventHandler implements DataSubscribeHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExampleDataEventHandler.class);
 
     @Override
-    public String key() {
-        return "track_default_test_t_user";
+    public String dataSource() {
+        return "mongo-default";
+    }
+
+    @Override
+    public String database() {
+        return "test";
+    }
+
+    @Override
+    public String table() {
+        return "t_user";
     }
 
     @Override

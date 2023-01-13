@@ -55,4 +55,8 @@ public class Const {
     public static String withEventQueue(String suffix) {
         return EVENT_QUEUE_PREFIX + "_" + suffix;
     }
+
+    public static String uniqueKey(String namespace, String dsName, String dbName, String tableName) {
+        return namespace + "#" + dsName + "@" + dbName + "-" + tableName;
+    }
 }

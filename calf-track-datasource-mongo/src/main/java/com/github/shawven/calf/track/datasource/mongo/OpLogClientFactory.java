@@ -28,7 +28,9 @@ public class OpLogClientFactory {
 
     private final DataSourceCfgOps dataSourceCfgOps;
 
-    public volatile AtomicLong eventCount = new AtomicLong(0);
+    private final AtomicLong eventCount = new AtomicLong(0);
+
+    private long lastEventCount = 0;
 
     /**
      * 事件类型的key，值可为i(插入)、u(更新)、d(删除)
@@ -54,8 +56,6 @@ public class OpLogClientFactory {
      * 更新事件，更新的内容
      */
     public static final String UPDATE_CONTEXT_KEY = "$set";
-
-    private long lastEventCount = 0;
 
     public OpLogClientFactory(StatusOps statusOps,
                               DataSourceCfgOps dataSourceCfgOps) {
@@ -110,6 +110,10 @@ public class OpLogClientFactory {
     }
 
 
+    public void incEventCount() {
+        eventCount.incrementAndGet();
+    }
+
     public long getEventCount() {
         return eventCount.get();
     }
@@ -121,5 +125,6 @@ public class OpLogClientFactory {
         lastEventCount = total;
 
         return res;
+
     }
 }
