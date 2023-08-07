@@ -16,6 +16,9 @@ spring:
     username: user
     password: bitnami
 
+  redisson:
+
+
 track:
   etcd:
     url: http://${target-host}:2379
