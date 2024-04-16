@@ -9,9 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 /**
- * @auther: chenjh
- * @time: 2018/11/19 14:57
- * @description
+ * @author xw
+ * @date 2023/1/5
  */
 public class RabbitDataPublisher implements DataPublisher {
 
@@ -30,7 +29,7 @@ public class RabbitDataPublisher implements DataPublisher {
             String routingKey = Const.withEventQueue(data.key());
 
             sendData(routingKey, msg);
-            logger.info("推送信息 {}", msg);
+//            logger.info("推送信息 {}", msg);
         } catch (Exception e) {
             logger.error("推送信息  " + msg + " 失败", e);
         }

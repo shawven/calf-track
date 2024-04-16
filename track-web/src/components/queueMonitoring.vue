@@ -1,29 +1,29 @@
 <template>
   <el-tabs type="card" v-model="activeName" @tab-click="handleClick(activeName)">
-    <el-tab-pane name="redis">
-      <span slot="label"> <i class="el-icon-info" style="color:green"></i>Redis队列</span>
-      <el-collapse accordion>
-        <div v-for="item in redisClientIds" @click.once="getClientQueue(item,'redis',1)">
-          <el-collapse-item :title="item">
-            <el-table :data="redisQueueArray[item]">
-              <el-table-column
-                type="index"
-                width="50">
-              </el-table-column>
-              <el-table-column prop="queue" label="详细" align="center"></el-table-column>
-            </el-table>
-            <el-pagination
-              @current-change="handleCurrentChange"
-              :page-size="10"
-              layout="total,  prev, pager, next, jumper"
-              :total="redisQueueSize">
-            </el-pagination>
-          </el-collapse-item>
-        </div>
-      </el-collapse>
-    </el-tab-pane>
+<!--    <el-tab-pane name="redis">-->
+<!--      <span slot="label"> <i class="el-icon-info" style="color:green"></i>Redis队列</span>-->
+<!--      <el-collapse accordion>-->
+<!--        <div v-for="item in redisClientIds" @click.once="getClientQueue(item,'redis',1)">-->
+<!--          <el-collapse-item :title="item">-->
+<!--            <el-table :data="redisQueueArray[item]">-->
+<!--              <el-table-column-->
+<!--                type="index"-->
+<!--                width="50">-->
+<!--              </el-table-column>-->
+<!--              <el-table-column prop="queue" label="详细" align="center"></el-table-column>-->
+<!--            </el-table>-->
+<!--            <el-pagination-->
+<!--              @current-change="handleCurrentChange"-->
+<!--              :page-size="10"-->
+<!--              layout="total,  prev, pager, next, jumper"-->
+<!--              :total="redisQueueSize">-->
+<!--            </el-pagination>-->
+<!--          </el-collapse-item>-->
+<!--        </div>-->
+<!--      </el-collapse>-->
+<!--    </el-tab-pane>-->
     <el-tab-pane name="rabbit">
-      <span slot="label"> <i class="el-icon-info" style="color:green"></i>Rabbit队列</span>
+      <span slot="label"> <i class="el-icon-data-line" style="color:green"></i> Rabbit队列</span>
       <el-collapse accordion>
         <div v-for="item in rabbitClientIds" @click.once="getClientQueue(item,'rabbit',1)">
           <el-collapse-item :title="item">
@@ -44,50 +44,50 @@
         </div>
       </el-collapse>
     </el-tab-pane>
-    <el-tab-pane name="kafka">
-      <span slot="label"> <i class="el-icon-info" style="color:green"></i>Kafka队列</span>
-      <el-collapse accordion>
-        <div v-for="item in kafkaClientIds" @click.once="getClientQueue(item,'kafka',1)">
-          <el-collapse-item :title="item">
-            <el-table :data="kafkaQueueArray[item]">
-              <el-table-column
-                type="index"
-                width="50">
-              </el-table-column>
-              <el-table-column prop="queue" label="详细" align="center"></el-table-column>
-            </el-table>
-            <el-pagination
-              @current-change="handleCurrentChange"
-              :page-size="10"
-              layout="total,  prev, pager, next, jumper"
-              :total="kafkaQueueSize">
-            </el-pagination>
-          </el-collapse-item>
-        </div>
-      </el-collapse>
-    </el-tab-pane>
-    <el-tab-pane name="error">
-      <span slot="label"> <i class="el-icon-error" style="color: red"></i>异常队列</span>
-      <el-collapse>
-        <div v-for="item in errClient" :key="item" @click.once="getClientQueue(item,'error',1)">
-          <el-collapse-item :title="item">
-            <el-table :data="abnormalQueue"  ref="multipleTable">
-              <el-table-column type="index" width="50"></el-table-column>
-              <el-table-column prop="table" label="表" align="center"></el-table-column>
-              <el-table-column prop="projNo" label="项目编号" align="center"></el-table-column>
-              <el-table-column prop="cycle" label="期次" align="center"></el-table-column>
-              <el-table-column prop="repayType" label="偿还方式" align="center"></el-table-column>
-              <el-table-column prop="eventType" label="事件" align="center"></el-table-column>
-              <el-table-column label="操作" align="center">
-                <template slot-scope="scope">
-                  <el-button @click="deleteFromQueue(scope.row.uuid,item)">删除</el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-          </el-collapse-item>
-        </div>
-      </el-collapse>
-    </el-tab-pane>
+<!--    <el-tab-pane name="kafka">-->
+<!--      <span slot="label"> <i class="el-icon-info" style="color:green"></i>Kafka队列</span>-->
+<!--      <el-collapse accordion>-->
+<!--        <div v-for="item in kafkaClientIds" @click.once="getClientQueue(item,'kafka',1)">-->
+<!--          <el-collapse-item :title="item">-->
+<!--            <el-table :data="kafkaQueueArray[item]">-->
+<!--              <el-table-column-->
+<!--                type="index"-->
+<!--                width="50">-->
+<!--              </el-table-column>-->
+<!--              <el-table-column prop="queue" label="详细" align="center"></el-table-column>-->
+<!--            </el-table>-->
+<!--            <el-pagination-->
+<!--              @current-change="handleCurrentChange"-->
+<!--              :page-size="10"-->
+<!--              layout="total,  prev, pager, next, jumper"-->
+<!--              :total="kafkaQueueSize">-->
+<!--            </el-pagination>-->
+<!--          </el-collapse-item>-->
+<!--        </div>-->
+<!--      </el-collapse>-->
+<!--    </el-tab-pane>-->
+<!--    <el-tab-pane name="error">-->
+<!--      <span slot="label"> <i class="el-icon-error" style="color: red"></i>异常队列</span>-->
+<!--      <el-collapse>-->
+<!--        <div v-for="item in errClient" :key="item" @click.once="getClientQueue(item,'error',1)">-->
+<!--          <el-collapse-item :title="item">-->
+<!--            <el-table :data="abnormalQueue"  ref="multipleTable">-->
+<!--              <el-table-column type="index" width="50"></el-table-column>-->
+<!--              <el-table-column prop="table" label="表" align="center"></el-table-column>-->
+<!--              <el-table-column prop="projNo" label="项目编号" align="center"></el-table-column>-->
+<!--              <el-table-column prop="cycle" label="期次" align="center"></el-table-column>-->
+<!--              <el-table-column prop="repayType" label="偿还方式" align="center"></el-table-column>-->
+<!--              <el-table-column prop="eventType" label="事件" align="center"></el-table-column>-->
+<!--              <el-table-column label="操作" align="center">-->
+<!--                <template slot-scope="scope">-->
+<!--                  <el-button @click="deleteFromQueue(scope.row.uuid,item)">删除</el-button>-->
+<!--                </template>-->
+<!--              </el-table-column>-->
+<!--            </el-table>-->
+<!--          </el-collapse-item>-->
+<!--        </div>-->
+<!--      </el-collapse>-->
+<!--    </el-tab-pane>-->
   </el-tabs>
 </template>
 <script>

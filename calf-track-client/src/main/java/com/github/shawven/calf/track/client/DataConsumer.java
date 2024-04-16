@@ -8,6 +8,8 @@ import java.util.Map;
  */
 public interface DataConsumer {
 
+    String queueType();
+
     void startConsumers(String clientId, Map<String, DataSubscribeHandler> handlerMap);
 
     void stopConsumers(String clientId);

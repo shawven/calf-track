@@ -6,13 +6,11 @@
   "private": true,
   "scripts": {
     "dev": "webpack-dev-server --progress --config build/webpack.dev.conf.js",
-    "uat": "node build/uat-build.js",
-    "uat-middleground": "node build/uat-middleground-build.js",
     "start": "npm run dev",
     "build": "node build/build.js"
   },
   "dependencies": {
-    "axios": ">=0.18.1",
+    "axios": "^0.18.1",
     "element-ui": "^2.0.11",
     "node-sass": "^4.7.2",
     "sass-loader": "^6.0.6",

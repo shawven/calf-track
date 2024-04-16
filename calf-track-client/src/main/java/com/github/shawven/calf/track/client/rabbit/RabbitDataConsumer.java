@@ -16,11 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-
 /**
- * @auther: chenjh
- * @time: 2018/11/20 10:18
- * @description
+ * @author xw
+ * @date 2023/1/5
  */
 public class RabbitDataConsumer implements DataConsumer {
 
@@ -32,6 +30,11 @@ public class RabbitDataConsumer implements DataConsumer {
 
     public RabbitDataConsumer(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
+    }
+
+    @Override
+    public String queueType() {
+        return Const.QUEUE_TYPE_RABBIT;
     }
 
     @Override

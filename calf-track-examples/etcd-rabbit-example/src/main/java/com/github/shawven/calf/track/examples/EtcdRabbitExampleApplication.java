@@ -23,7 +23,7 @@ public class EtcdRabbitExampleApplication {
     @Autowired
     private RabbitTemplate rabbitTemplate;
 
-    @Value("${databaseEventServerUrl}")
+    @Value("${track.serverUrl}")
     private String serverUrl;
 
     @Value("${appName}")

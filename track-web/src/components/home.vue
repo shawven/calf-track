@@ -1,9 +1,9 @@
 <script src="../../../../../../html/vue-element-admin/src/store/index.js"></script>
 <template>
   <el-container>
-    <el-header style="display: flex; justify-content: space-between;">
+    <el-header style="display: flex; justify-content: space-between; background-color:#545c64">
       <div>
-        <h2 class="header">track-web</h2>
+        <h2 class="header" style="color:#fff">track-web</h2>
       </div>
       <el-select v-model="namespace" placeholder="请选择" @change="reload">
         <el-option
@@ -24,7 +24,8 @@
     </el-header>
     <el-container>
       <el-aside width="200px">
-        <el-menu  router default-active="clientList">
+        <el-menu  router default-active="clientList" class="menu-list" style="height: 100%"
+                  background-color="#545c64" text-color="#fff" >
           <el-menu-item index="datasourceList" route="" >数据源列表</el-menu-item>
           <el-menu-item index="clientList" route="">应用列表</el-menu-item>
           <el-menu-item index="queueMonitoring" route="" >队列监控</el-menu-item>
@@ -72,7 +73,7 @@
         this.$confirm('确认退出吗?', '提示', {
           //type: 'warning'
         }).then(() => {
-          this.$cookies.remove("keking_token");
+          this.$cookies.remove("track_token");
           sessionStorage.removeItem('user');
           _this.$router.push('/login');
         }).catch(() => {

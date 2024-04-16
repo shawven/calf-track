@@ -23,7 +23,7 @@ public class ClientInfo implements Serializable {
     private String name;
 
     /**
-     * 名称
+     * 命名控件
      */
     private String namespace;
 

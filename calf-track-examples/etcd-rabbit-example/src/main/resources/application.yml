@@ -15,19 +15,16 @@ spring:
     port: 5672
     username: user
     password: bitnami
-
-  redisson:
-
-
 track:
   etcd:
     url: http://${target-host}:2379
   zookeeper:
     url: ${target-host}:2181
 
+  #服务端的地址
+  serverUrl: http://localhost:8885
 
-#自动注册客户端(服务端的地址)
-databaseEventServerUrl: http://localhost:8885/client/addAll
+
 appName: etcd-rabbit-example
 
 #debug: true

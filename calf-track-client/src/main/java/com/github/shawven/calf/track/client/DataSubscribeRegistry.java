@@ -3,15 +3,27 @@ package com.github.shawven.calf.track.client;
 
 import com.github.shawven.calf.track.client.annotation.DataListenerAnnotationBeanPostProcessor;
 import com.github.shawven.calf.track.common.Const;
+import com.google.gson.Gson;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.SmartLifecycle;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * @author xw
@@ -54,12 +66,38 @@ public class DataSubscribeRegistry implements SmartLifecycle {
         logger.info("start syncToServer url: {}", serverUrl);
         try {
             if (serverUrl != null && !HANDLER_MAP.isEmpty()) {
-
+//                for (DataSubscribeHandler handler : HANDLER_MAP.values()) {
+//                    registerToServer(handler);
+//                }
             }
         } catch (Exception e) {
             logger.error("syncToServer error: " + e.getMessage(), e);
         }
         return this;
+    }
+
+    private void registerToServer(DataSubscribeHandler handler) throws IOException {
+        HttpPost request = new HttpPost(serverUrl + "/client/addAll?namespace=" + handler.namespace());
+        request.setEntity(new StringEntity(convertBody(handler), ContentType.APPLICATION_JSON));
+
+        CloseableHttpClient client = HttpClients.createDefault();
+        try ( CloseableHttpResponse response = client.execute(request)) {
+            EntityUtils.consume(response.getEntity());
+        }
+    }
+
+    private String convertBody(DataSubscribeHandler handler)  {
+        ArrayList<Object> objects = new ArrayList<>();
+        Map<String, Object> client = new HashMap<>();
+        client.put("name", clientId);
+        client.put("queueType", dataConsumer.queueType());
+        client.put("dsName", handler.dataSource());
+        client.put("dbName", handler.database());
+        client.put("tableName", handler.table());
+        client.put("eventActions", Arrays.stream(handler.actions()).map(Enum::name).collect(Collectors.toList()));
+        objects.add(client);
+
+        return new Gson().toJson(objects);
     }
 
     @Override

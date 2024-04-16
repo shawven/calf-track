@@ -187,7 +187,7 @@ import {addClient, deleteClient, getClientMap, deleteTopic, getDatasourceNames} 
     mounted(){
 
       // sso
-      let token = this.$cookies.get("keking_token");
+      let token = this.$cookies.get("track_token");
       if(token) {
         sessionStorage.setItem('user', '{"username":"' + token.username + '","token":"' + token.access_token + '"}');
       }

@@ -1,7 +1,7 @@
 <template>
   <el-form :model="ruleForm2" :rules="rules2" ref="ruleForm2" label-position="left" label-width="0px"
            class="demo-ruleForm login-container">
-    <h3 class="title">binLogClient-ams</h3>
+    <h3 class="title">track-web</h3>
     <el-form-item prop="account">
       <el-input type="text" v-model="ruleForm2.account" auto-complete="off" placeholder="输入任意字符登录"
                 @blur="" :autofocus="focusStatus"></el-input>
@@ -48,7 +48,7 @@
       submit(){
         this.$refs.ruleForm2.validate((valid) => {
           if (valid) {
-            cookies.set("keking_token", "需要对接自己的认证系统");
+            cookies.set("track_token", "track_token");
             sessionStorage.setItem('user', '{"username":"' + this.userName + '","token":"a"}');
             this.$router.push({path: '/datasourceList'});
             this.$message({
