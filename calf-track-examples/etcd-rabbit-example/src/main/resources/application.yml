@@ -15,6 +15,20 @@ spring:
     port: 5672
     username: user
     password: bitnami
+
+  kafka:
+    bootstrap-servers: 127.0.0.1:9092
+    listener:
+      type: batch
+      ack-mode: manual
+    consumer:
+      auto-offset-reset: latest
+      enable-auto-commit: false
+      # 默认500ms
+      fetch-max-wait: 1000
+      # 默认500
+      max-poll-records: 100
+
 track:
   etcd:
     url: http://${target-host}:2379

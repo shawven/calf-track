@@ -13,10 +13,9 @@ import com.github.shawven.calf.track.register.PathKey;
 import com.github.shawven.calf.track.register.domain.DataSourceCfg;
 import com.github.shawven.calf.track.register.domain.ServerStatus;
 import com.github.shawven.calf.track.register.election.Election;
+import com.github.shawven.calf.track.register.election.ElectionListener;
 
 import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
-import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -71,8 +70,9 @@ public class MongoTrackServerImpl extends AbstractTrackServer {
             String namespace = dsCfg.getNamespace();
             String processName = dsCfg.getName() + ":" + ManagementFactory.getRuntimeMXBean().getName();
 
-            OplogElectionListener listener = new OplogElectionListener(dsCfg,
+            ElectionListener listener = new OplogWorker(applicationContext, dsCfg,
                     opLogClientFactory, statusOps, clientOps, dataSourceCfgOps, dataPublisherManager);
+
 
             Election election = electionFactory.getElection(path, namespace, processName, 20L, listener);
 

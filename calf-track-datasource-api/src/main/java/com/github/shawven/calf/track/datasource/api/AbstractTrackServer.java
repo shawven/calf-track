@@ -1,5 +1,6 @@
 package com.github.shawven.calf.track.datasource.api;
 
+import com.github.shawven.calf.track.datasource.api.event.DataSourceStartedEvent;
 import com.github.shawven.calf.track.register.domain.DataSourceCfg;
 import com.github.shawven.calf.track.datasource.api.domain.Command;
 import com.github.shawven.calf.track.datasource.api.ops.ClientOps;
@@ -7,18 +8,20 @@ import com.github.shawven.calf.track.datasource.api.ops.DataSourceCfgOps;
 import com.github.shawven.calf.track.datasource.api.ops.StatusOps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 /**
  * @author xw
  * @date 2021/11/15
  */
-public abstract class AbstractTrackServer implements TrackServer {
+public abstract class AbstractTrackServer implements TrackServer, ApplicationContextAware {
 
     protected static final Logger logger = LoggerFactory.getLogger(AbstractTrackServer.class);
 
@@ -28,6 +31,8 @@ public abstract class AbstractTrackServer implements TrackServer {
 
     protected StatusOps statusOps;
 
+    protected ApplicationContext applicationContext;
+
     public AbstractTrackServer(DataSourceCfgOps dataSourceCfgOps,
                                ClientOps clientOps,
                                StatusOps statusOps) {
@@ -36,6 +41,10 @@ public abstract class AbstractTrackServer implements TrackServer {
         this.statusOps = statusOps;
     }
 
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
+    }
 
     @Override
     public void start() {
@@ -49,6 +58,11 @@ public abstract class AbstractTrackServer implements TrackServer {
                 // 在线程中启动事件监听
                 if(cfg.isActive()) {
                     doStart(cfg);
+
+                    // 发布数据源启动事件
+                    logger.info("publishing dataSource started event");
+                    applicationContext.publishEvent(new DataSourceStartedEvent(cfg));
+
                     logger.info("successfully started namespace:{} name:{}", namespace, cfg.getName());
                 }
             }

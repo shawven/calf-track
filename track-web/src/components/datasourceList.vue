@@ -52,7 +52,7 @@
     <el-dialog width="40%" :title="editorTitle" :visible.sync="editorVisible">
       <el-form :rules="rules" ref="ruleForm" class="persist-datasource-form" label-width="150px" :model="persistDatasource">
         <el-form-item label="名称" prop="name">
-          <el-input class="form-input" v-model="persistDatasource.name" :disabled="isEdit"/>
+          <el-input class="form-input" v-model="persistDatasource.name" :disabled="isCreate || isEdit"/>
         </el-form-item>
         <el-form-item label="数据源类型" prop="dataSourceType">
           <el-select v-model="persistDatasource.dataSourceType" style="width: 100%" placeholder="请选择">
@@ -103,6 +103,7 @@
         serviceStatusList: [],
         editorTitle: "添加数据源",
         editorVisible: false,
+        isCreate: false,
         isEdit: false,
         startVisible: false,
         persistDatasource: {
@@ -170,7 +171,7 @@
       },
       showCreator() {
         this.editorVisible = true
-        this.isEdit = false;
+        this.isCreate = false;
         this.persistDatasource = {...this.defaultPersistDatasource}
         this.editorTitle = "添加数据源";
       },
@@ -221,7 +222,7 @@
           }
 
           this.editorVisible = false;
-          const action = this.persistDatasource.id != null ? updateDatasource : persistDatasource
+          const action = this.isEdit ? updateDatasource : persistDatasource
           action(this.persistDatasource).then(res=>{
             if(res.data.code==="success"){
               this.$message({

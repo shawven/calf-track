@@ -39,11 +39,19 @@ public class Const {
      */
     public static final String PREFIX = "track";
 
-    // rabbit
+    /**
+     * kafka
+     */
+    public static final String KAFKA_EVENT_TOPIC = PREFIX;
+
+    /**
+     * rabbit
+     */
     public static final String RABBIT_EVENT_EXCHANGE = PREFIX;
 
-
-    // redis
+    /**
+     * redis
+     */
     public static final String REDIS_PREFIX = PREFIX + "::";
 
 
@@ -52,8 +60,12 @@ public class Const {
      */
     private static final String EVENT_QUEUE_PREFIX = PREFIX;
 
-    public static String withEventQueue(String suffix) {
+    public static String rabbitQueueName(String suffix) {
         return EVENT_QUEUE_PREFIX + "_" + suffix;
+    }
+
+    public static String kafkaTopicName(String namespace, String dsName, String dbName) {
+        return EVENT_QUEUE_PREFIX + "_" + namespace + "_" + dsName + "_" + dbName;
     }
 
     public static String uniqueKey(String namespace, String dsName, String dbName, String tableName) {

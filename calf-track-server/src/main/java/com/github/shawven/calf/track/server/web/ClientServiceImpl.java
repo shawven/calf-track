@@ -9,6 +9,7 @@ import com.github.shawven.calf.track.datasource.api.domain.DataErrorMsg;
 import com.github.shawven.calf.track.datasource.api.ops.ClientOps;
 import com.github.shawven.calf.track.datasource.api.ops.StatusOps;
 import com.github.shawven.calf.track.register.domain.ClientInfo;
+import com.github.shawven.calf.track.server.publisher.kafka.KafkaService;
 import com.github.shawven.calf.track.server.publisher.rabbit.RabbitService;
 import com.rabbitmq.http.client.domain.QueueInfo;
 import org.redisson.api.RMap;
@@ -28,10 +29,13 @@ import java.util.stream.Collectors;
 public class ClientServiceImpl implements ClientService {
 
     @Autowired
-    RedissonClient redissonClient;
+    private RedissonClient redissonClient;
 
     @Autowired
     private RabbitService rabbitService;
+
+    @Autowired
+    private KafkaService kafkaService;
 
     @Autowired
     private ClientOps clientOps;
@@ -42,18 +46,11 @@ public class ClientServiceImpl implements ClientService {
     @Autowired
     private DataPublisher dataPublisher;
 
-//    @Autowired
-//    private KafkaService kafkaService;
+
 
     @Override
-    public void addClient(ClientInfo clientInfo, Integer partitions, Integer replication) {
-
-        clientOps.addConsumerClient(clientInfo);
-
-        if (Const.QUEUE_TYPE_KAFKA.equals(clientInfo.getQueueType())) {
-//            kafkaService.createKafkaTopic(clientInfo, partitions, replication);
-        }
-
+    public void saveClient(ClientInfo clientInfo) {
+        clientOps.saveConsumerClient(clientInfo);
     }
 
     @Override
@@ -121,8 +118,7 @@ public class ClientServiceImpl implements ClientService {
                 return object.toJSONString();
             }
         } else if (Const.QUEUE_TYPE_KAFKA.equals(type)) {
-
-            // TODO 增加Kafka队列查询
+            kafkaService.getConsumerGroup();
             object.put("queueSize", 0);
             object.put("queue", new ArrayList<>());
             return object.toJSONString();

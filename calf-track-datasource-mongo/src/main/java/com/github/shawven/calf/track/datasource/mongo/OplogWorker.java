@@ -2,35 +2,29 @@ package com.github.shawven.calf.track.datasource.mongo;
 
 import com.github.shawven.calf.track.common.EventAction;
 import com.github.shawven.calf.track.datasource.api.DataPublisher;
-import com.github.shawven.calf.track.datasource.api.NetUtils;
 import com.github.shawven.calf.track.datasource.api.domain.BaseRows;
 import com.github.shawven.calf.track.datasource.api.ops.ClientOps;
 import com.github.shawven.calf.track.datasource.api.ops.DataSourceCfgOps;
 import com.github.shawven.calf.track.datasource.api.ops.StatusOps;
-import com.github.shawven.calf.track.register.domain.ClientInfo;
 import com.github.shawven.calf.track.register.domain.DataSourceCfg;
-import com.github.shawven.calf.track.register.election.ElectionListener;
+import com.github.shawven.calf.track.datasource.api.BaseWorkSpace;
 import io.reactivex.rxjava3.disposables.Disposable;
 import org.bson.BsonTimestamp;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 
 import java.lang.management.ManagementFactory;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 
 /**
  * @author xw
  * @date 2023-01-05
  */
-public class OplogElectionListener implements ElectionListener {
+public class OplogWorker extends BaseWorkSpace {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-
-    private final DataSourceCfg dataSourceCfg;
 
     private final OpLogClientFactory opLogClientFactory;
 
@@ -46,14 +40,13 @@ public class OplogElectionListener implements ElectionListener {
 
     private Disposable disposable;
 
-    private final Map<String, Set<EventAction>> watchedEvents = new ConcurrentHashMap<>();
-
-    public OplogElectionListener(DataSourceCfg dataSourceCfg,
-                                 OpLogClientFactory opLogClientFactory,
-                                 StatusOps statusOps, ClientOps clientOps,
-                                 DataSourceCfgOps dataSourceCfgOps,
-                                 DataPublisher dataPublisher) {
-        this.dataSourceCfg = dataSourceCfg;
+    public OplogWorker(ApplicationContext applicationContext,
+                       DataSourceCfg dataSourceCfg,
+                       OpLogClientFactory opLogClientFactory,
+                       StatusOps statusOps, ClientOps clientOps,
+                       DataSourceCfgOps dataSourceCfgOps,
+                       DataPublisher dataPublisher) {
+        super(applicationContext, dataSourceCfg);
         this.opLogClientFactory = opLogClientFactory;
         this.statusOps = statusOps;
         this.clientOps = clientOps;
@@ -96,7 +89,7 @@ public class OplogElectionListener implements ElectionListener {
             dataSourceCfg.setVersion(dataSourceCfg.getVersion() + 1);
             dataSourceCfgOps.update(dataSourceCfg);
         } catch (Exception e) {
-            logger.error("[" + dataSourceCfg.getNamespace() + "] 处理事件异常，{}", e);
+            logger.error("[" + dataSourceCfg.getNamespace() + "] 处理事件异常", e);
         }
 
     }
@@ -152,9 +145,9 @@ public class OplogElectionListener implements ElectionListener {
         if (eventAction == null) {
             return false;
         }
-        String tableKey = DocumentUtils.getDataBase(event).concat("/").concat(DocumentUtils.getTable(event));
-        Set<EventAction> eventActions = watchedEvents.getOrDefault(tableKey, Collections.emptySet());
-        return eventActions.contains(eventAction);
+        String dataBase = DocumentUtils.getDataBase(event);
+        String table = DocumentUtils.getTable(event);
+        return filterEvent(eventAction, dataBase, table);
     }
 
     private static EventAction parseEventAction(String eventType) {
@@ -172,22 +165,5 @@ public class OplogElectionListener implements ElectionListener {
             default:
         }
         return databaseEvent;
-    }
-
-    private synchronized void updateWatchedEvents(Collection<ClientInfo> clientInfos) {
-        clientInfos.stream()
-                .collect(Collectors.groupingBy(this::getEventKey))
-                .forEach((key, clients) -> {
-                    Set<EventAction> newSet = clients.stream()
-                            .flatMap(c -> c.getEventActions().stream())
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toSet());
-                    Set<EventAction> set = watchedEvents.computeIfAbsent(key, (s) -> new HashSet<>());
-                    set.addAll(newSet);
-                });
-    }
-
-    private String getEventKey(ClientInfo clientInfo) {
-        return clientInfo.getDbName().concat("/").concat(clientInfo.getTableName());
     }
 }

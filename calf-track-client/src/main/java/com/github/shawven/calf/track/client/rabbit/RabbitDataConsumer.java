@@ -3,10 +3,7 @@ package com.github.shawven.calf.track.client.rabbit;
 import com.github.shawven.calf.track.common.Const;
 import com.github.shawven.calf.track.client.DataConsumer;
 import com.github.shawven.calf.track.client.DataSubscribeHandler;
-import com.google.gson.Gson;
 import com.rabbitmq.client.*;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -42,22 +39,22 @@ public class RabbitDataConsumer implements DataConsumer {
         for (Map.Entry<String, DataSubscribeHandler> entry : handlerMap.entrySet()) {
             try {
                 String key = entry.getKey();
-                consume(key + "@" + clientId, Const.withEventQueue(key), entry.getValue());
+                registerConsumer(key + "@" + clientId, Const.rabbitQueueName(key), entry.getValue());
             } catch (IOException e) {
                 logger.error("RabbitDataConsumer subscribe failed :" + e.getMessage(), e);
             }
         }
     }
 
-    private void consume(String clientId, String routingKey, DataSubscribeHandler handler) throws IOException {
+    private void registerConsumer(String queue, String routingKey, DataSubscribeHandler handler) throws IOException {
         Channel channel = rabbitTemplate.getConnectionFactory().createConnection().createChannel(false);
         try {
-            channel.queueDeclare(clientId, true, false, true, null);
+            channel.queueDeclare(queue, true, false, true, null);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        channel.queueBind(clientId, Const.RABBIT_EVENT_EXCHANGE, routingKey);
+        channel.queueBind(queue, Const.RABBIT_EVENT_EXCHANGE, routingKey);
 
         SimpleConsumer consumer = new SimpleConsumer(channel) {
             @Override
@@ -78,7 +75,7 @@ public class RabbitDataConsumer implements DataConsumer {
             }
         };
 
-        consumer.consumerTag  = channel.basicConsume(clientId, false, consumer);
+        consumer.consumerTag  = channel.basicConsume(queue, false, consumer);
         consumers.add(consumer);
     }
 

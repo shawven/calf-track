@@ -1,6 +1,7 @@
 package com.github.shawven.calf.track.examples;
 
 import com.github.shawven.calf.track.client.DataSubscribeRegistry;
+import com.github.shawven.calf.track.client.kafka.KafkaDataConsumer;
 import com.github.shawven.calf.track.client.rabbit.RabbitDataConsumer;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -9,6 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
@@ -23,6 +26,12 @@ public class EtcdRabbitExampleApplication {
     @Autowired
     private RabbitTemplate rabbitTemplate;
 
+    @Autowired
+    private KafkaListenerEndpointRegistry registry;
+
+    @Autowired
+    private ConcurrentKafkaListenerContainerFactory<?, ?> factory;
+
     @Value("${track.serverUrl}")
     private String serverUrl;
 
@@ -35,7 +44,8 @@ public class EtcdRabbitExampleApplication {
         return new DataSubscribeRegistry()
                 .setClientId(appName)
                 .setServerUrl(serverUrl)
-                .setDataConsumer(new RabbitDataConsumer(rabbitTemplate))
+//                .setDataConsumer(new RabbitDataConsumer(rabbitTemplate))
+                .setDataConsumer(new KafkaDataConsumer(registry, factory))
                 .syncToServer();
 
     }

@@ -1,9 +1,9 @@
 MongodbOpLog
 
-高可用：多节点主备高可用，基于etcd、zookeeper领导选举
-数据发布：rabbitmq，kafka
+高可用：基于etcd、zookeeper领导选举，多节点主备高可用
+消息队列：kafka、rabbitmq
 命名空间：数据环境应用隔离
-可扩充多数据源：mongo、mysql（暂未支持）
+数据源扩展：mongo、mysql
 
 track-web，dashboard 基于vuejs，可视化监控操作
 

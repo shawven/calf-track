@@ -16,20 +16,39 @@ public class ExampleHandlers {
     private static final Logger logger = LoggerFactory.getLogger(ExampleHandlers.class);
 
     @DataSubscriber(
-            dataSource = "mongo_local",
-            database = "test",
-            table = "t_user",
-            actions = {EventAction.INSERT, EventAction.UPDATE, EventAction.DELETE})
-    public void handle1(String data) {
-        logger.info("handle1 接收信息:" + data);
-    }
-
-    @DataSubscriber(
             dataSource = "mongo_dev",
             database = "test",
             table = "t_user",
             actions = {EventAction.INSERT, EventAction.UPDATE, EventAction.DELETE})
-    public void handle2(String data) {
-        logger.info("handle2 接收信息:" + data);
+    public void handle1(String data) {
+        logger.info("handle2 接收 rabbit 信息:" + data);
     }
+
+    @DataSubscriber(
+            dataSource = "mongo_local",
+            database = "test",
+            table = "t_user_0",
+            actions = {EventAction.INSERT, EventAction.UPDATE, EventAction.DELETE})
+    public void handle2(String data) {
+        logger.info("handle2 接收 kafka 信息:" + data);
+    }
+
+    @DataSubscriber(
+            dataSource = "mongo_local",
+            database = "test",
+            table = "t_user_1",
+            actions = {EventAction.INSERT, EventAction.UPDATE, EventAction.DELETE})
+    public void handle3(String data) {
+        logger.info("handle3 接收 kafka 信息:" + data);
+    }
+
+    @DataSubscriber(
+            dataSource = "mongo_local",
+            database = "test",
+            table = "t_user_2",
+            actions = {EventAction.INSERT, EventAction.UPDATE, EventAction.DELETE})
+    public void handle4(String data) {
+        logger.info("handle4 接收 kafka 信息:" + data);
+    }
+
 }

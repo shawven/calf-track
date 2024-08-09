@@ -6,7 +6,7 @@ package com.github.shawven.calf.track.register.election;
  * @author xw
  * @date 2022-12-08
  */
-public interface ElectionListener extends LeaderLatchListener, LeaderSelectorListener {
+public interface ElectionListener extends LeaderLatchListener {
 
     @Override
     default void isLeader() {
@@ -15,11 +15,6 @@ public interface ElectionListener extends LeaderLatchListener, LeaderSelectorLis
 
     @Override
     default void notLeader() {
-
-    }
-
-    @Override
-    default void takeLeadership() {
 
     }
 }

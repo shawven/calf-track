@@ -23,9 +23,10 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="queueType" label="队列类型" align="center"></el-table-column>
+<!--          <el-table-column prop="queueType" label="队列类型" align="center"></el-table-column>-->
           <el-table-column label="操作" align="center">
             <template slot-scope="scope">
+              <el-button type="warning" size="small"  v-if="!scope.row.active" @click="showEditor(scope.row)">修改</el-button>
               <el-button type="danger" size="small" @click="deleteClient(scope.row)">删除</el-button>
             </template>
           </el-table-column>
@@ -34,7 +35,7 @@
       </el-collapse-item>
     </el-collapse>
 
-    <el-dialog width="40%" title="添加应用" :visible.sync="addClientVisible">
+    <el-dialog width="40%" :title="editorTitle" :visible.sync="addClientVisible">
       <el-form :model="client" :rules="rules" ref="ruleForm" label-width="100px">
         <el-form-item prop="name" label="应用名称">
           <el-input v-model="client.name" class="auto"></el-input>
@@ -64,13 +65,13 @@
             <el-checkbox label="DELETE">删除操作</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
-        <el-form-item label="队列类型" prop="queueType">
-          <el-radio-group v-model="client.queueType" @change="queueTypeChange">
-            <el-radio :label="'rabbit'">rabbit</el-radio>
-            <el-radio :label="'kafka'">kafka</el-radio>
-            <el-radio :label="'redis'">redis</el-radio>
-          </el-radio-group>
-        </el-form-item>
+<!--        <el-form-item label="队列类型" prop="queueType">-->
+<!--          <el-radio-group v-model="client.queueType" @change="queueTypeChange">-->
+<!--            <el-radio :label="'rabbit'">rabbit</el-radio>-->
+<!--            <el-radio :label="'kafka'">kafka</el-radio>-->
+<!--            <el-radio :label="'redis'">redis</el-radio>-->
+<!--          </el-radio-group>-->
+<!--        </el-form-item>-->
         <el-form-item prop="partitions" v-show="isKafkaQueueType" label="kafka分区">
           <el-input v-model="client.partitions" class="auto"></el-input>
         </el-form-item>
@@ -80,24 +81,32 @@
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="addClientVisible = false">取 消</el-button>
-        <el-button type="primary" size="small" @click="addclient('ruleForm')">确 定</el-button>
+        <el-button type="primary" size="small" @click="save('ruleForm')">确 定</el-button>
       </div>
     </el-dialog>
 
   </div>
 </template>
 <script>
-import {addClient, deleteClient, getClientMap, deleteTopic, getDatasourceNames} from '../api/api'
+import {
+  saveClient,
+  deleteClient,
+  getClientMap,
+  deleteTopic,
+  getDatasourceNames,
+} from '../api/api'
   import ElButton from "../../node_modules/element-ui/packages/button/src/button.vue";
   export  default {
     components: {ElButton},
     data() {
       return {
         addClientVisible: false,
+        isCreate: false,
+        isEdit: false,
         clientMap: {},
         activeClientGroup: [],
-
-        client: {
+        client:{},
+        defaultClient: {
           name: '',
           dsName: '',
           dbName: '',
@@ -125,6 +134,18 @@ import {addClient, deleteClient, getClientMap, deleteTopic, getDatasourceNames} 
           this.clientMap=res.data;
           this.activeClientGroup = Object.keys(res.data)
         })
+      },
+      showCreator() {
+        this.addClientVisible = true
+        this.isCreate = false;
+        this.client = {...this.defaultPersistDatasource}
+        this.editorTitle = "添加应用";
+      },
+      showEditor(row) {
+        this.addClientVisible = true
+        this.isEdit = true;
+        this.client = row
+        this.editorTitle = "修改应用";
       },
       deleteClient(client){
         deleteClient(client).then(data=>{
@@ -158,20 +179,20 @@ import {addClient, deleteClient, getClientMap, deleteTopic, getDatasourceNames} 
           })
         })
       },
-      addclient(ruleForm) {
+      save(ruleForm) {
         this.$refs[ruleForm].validate((valid) => {
           if (valid) {
-            addClient(this.client).then((res)=> {
+            saveClient(this.client).then((res)=> {
               if (res.data.code == 'success') {
                 this.$message({
                   type: 'success',
-                  message: '添加成功'
+                  message: '保存成功'
                 })
                 this.addClientVisible = false;
                 this.listClientMap()
               }
               else {
-                this.$message.error("添加失败：", res.data.msg)
+                this.$message.error("保存失败：", res.data.msg)
               }
             })
           }

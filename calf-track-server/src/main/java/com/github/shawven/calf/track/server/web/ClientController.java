@@ -1,7 +1,6 @@
 package com.github.shawven.calf.track.server.web;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.github.shawven.calf.track.common.Const;
 import com.github.shawven.calf.track.register.domain.ClientInfo;
@@ -27,15 +26,13 @@ public class ClientController {
     @Autowired
     ClientService clientService;
 
-    @PostMapping(value = "/add")
-    public Result add(String namespace, @RequestBody String data) {
+    @PostMapping(value = "/save")
+    public Result create(String namespace, @RequestBody String data) {
         JSONObject jsonObject = JSON.parseObject(data);
-        Integer partitions = jsonObject.getInteger("partitions");
-        Integer replication = jsonObject.getInteger("replication");
 
         ClientInfo clientInfo = jsonObject.toJavaObject(ClientInfo.class);
         clientInfo.setNamespace(namespace);
-        clientService.addClient(clientInfo, partitions, replication);
+        clientService.saveClient(clientInfo);
 
         return Result.success("添加成功");
     }
@@ -46,7 +43,7 @@ public class ClientController {
         List<ClientInfo> clientInfos = JSON.parseArray(data, ClientInfo.class);
         clientInfos.forEach(clientInfo -> {
             clientInfo.setNamespace(namespace);
-            clientService.addClient(clientInfo, null, null);
+            clientService.saveClient(clientInfo);
         });
         return Result.success("添加成功");
     }

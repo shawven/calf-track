@@ -80,8 +80,8 @@ public class DataSubscribeRegistry implements SmartLifecycle {
         HttpPost request = new HttpPost(serverUrl + "/client/addAll?namespace=" + handler.namespace());
         request.setEntity(new StringEntity(convertBody(handler), ContentType.APPLICATION_JSON));
 
-        CloseableHttpClient client = HttpClients.createDefault();
-        try ( CloseableHttpResponse response = client.execute(request)) {
+        try (CloseableHttpClient client = HttpClients.createDefault();
+             CloseableHttpResponse response = client.execute(request)) {
             EntityUtils.consume(response.getEntity());
         }
     }

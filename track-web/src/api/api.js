@@ -58,13 +58,14 @@ export const getErrorClientList=params=>{
 
 
 /**
- * 新增一个应用
+ * 保存一个应用
  * @param params
  * @returns {AxiosPromise<any>}
  */
-export const addClient=params=>{
-  return axios.post(`${backendUrl}client/add`,params)
+export const saveClient=params=>{
+  return axios.post(`${backendUrl}client/save`,params)
 }
+
 /**
  * 删除一个应用
  * @param params

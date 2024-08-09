@@ -61,7 +61,7 @@ public class ClientOpsImpl implements ClientOps {
     }
 
     @Override
-    public void addConsumerClient(ClientInfo clientInfo) {
+    public void saveConsumerClient(ClientInfo clientInfo) {
         String namespace = clientInfo.getNamespace();
         if (!dataSourceCfgOps.listNames(namespace).contains(clientInfo.getDsName())) {
             throw new RuntimeException(String.format("namespace: %s not exist dataSource: %s",

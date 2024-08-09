@@ -19,7 +19,7 @@ public interface ClientOps {
 
     List<ClientInfo> listConsumerClientsByKey(String namespace, String clientInfoKey);
 
-    void addConsumerClient(ClientInfo clientInfo);
+    void saveConsumerClient(ClientInfo clientInfo);
 
     void removeConsumerClient(List<ClientInfo> clientInfos);
 

@@ -27,30 +27,21 @@ public class DataSourceController {
     @PostMapping("/save")
     public Result saveDatasourceConfig(String namespace, @RequestBody DataSourceCfg config) {
         config.setNamespace(namespace);
-        if(dataSourceService.saveDatasourceConfig(config)) {
-            return new Result(Result.SUCCESS, "添加数据源成功");
-        } else {
-            return new Result(Result.ERROR, "添加数据源失败，命名空间已存在");
-        }
+        dataSourceService.saveDatasourceConfig(config);
+        return new Result(Result.SUCCESS, "添加数据源成功");
     }
 
     @PostMapping("/update")
     public Result updateDatasourceConfig(String namespace, @RequestBody DataSourceCfg config) {
         config.setNamespace(namespace);
-        if(dataSourceService.updateDatasourceConfig(config)) {
-            return new Result(Result.SUCCESS, "更新数据源成功");
-        } else {
-            return new Result(Result.ERROR, "更新数据源失败");
-        }
+        dataSourceService.updateDatasourceConfig(config);
+        return new Result(Result.SUCCESS, "更新数据源成功");
     }
 
     @PostMapping("/remove")
     public Result removeDatasourceConfig(String namespace, @RequestBody DataSourceCfg config) {
-        if(dataSourceService.removeDatasourceConfig(namespace, config.getName())) {
-            return new Result(Result.SUCCESS, "移除数据源成功");
-        } else {
-            return new Result(Result.ERROR, "移除数据源失败");
-        }
+        dataSourceService.removeDatasourceConfig(namespace, config.getName());
+        return new Result(Result.SUCCESS, "移除数据源成功");
     }
 
     @PostMapping("/start")

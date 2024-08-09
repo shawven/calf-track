@@ -26,7 +26,7 @@ public class RabbitDataPublisher implements DataPublisher {
     public void publish(BaseRows data) {
         String msg = JSON.toJSONString(data);
         try {
-            String routingKey = Const.withEventQueue(data.key());
+            String routingKey = Const.rabbitQueueName(data.key());
 
             sendData(routingKey, msg);
 //            logger.info("推送信息 {}", msg);

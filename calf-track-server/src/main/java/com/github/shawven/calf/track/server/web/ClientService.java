@@ -11,12 +11,11 @@ import java.util.Map;
  */
 public interface ClientService {
     /**
-     * 添加服务器端及本地client信息
+     * 保存服务器端及本地client信息
      *
-     * @param namespace
      * @param clientInfo
      */
-    void addClient(ClientInfo clientInfo, Integer partitions, Integer replication);
+    void saveClient(ClientInfo clientInfo);
 
     /**
      * 客户端订阅信息
