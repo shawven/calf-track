@@ -1,6 +1,8 @@
 package com.github.shawven.calf.track.server.ops;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.github.shawven.calf.track.common.Const;
 import com.github.shawven.calf.track.datasource.api.domain.Command;
 import com.github.shawven.calf.track.datasource.api.ops.ClientOps;
@@ -13,8 +15,10 @@ import com.github.shawven.calf.track.register.domain.DataSourceCfg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -71,9 +75,6 @@ public class ClientOpsImpl implements ClientOps {
         String name = clientInfo.getName();
         if (name == null) {
             clientInfo.setName(System.currentTimeMillis() + "");
-        } else if (repository.get(clientKey(namespace, name)) != null) {
-            throw new RuntimeException(String.format("namespace: %s exist client : %s",
-                    namespace, name));
         }
 
         repository.set(clientKey(namespace, name), JSON.toJSONString(clientInfo));
@@ -102,10 +103,21 @@ public class ClientOpsImpl implements ClientOps {
         repository.watch(clientKey(cfg.getNamespace()), new Emitter<String>() {
             @Override
             public void onNext(String value) {
-                List<ClientInfo> list = JSON.parseArray(value, ClientInfo.class).stream()
-                        .filter(clientInfo -> Objects.equals(clientInfo.getDsName(), cfg.getName()))
-                        .collect(Collectors.toList());
-                consumer.accept(list);
+                CompletableFuture.runAsync(() -> {
+                    Object object = JSON.parse(value);
+
+                    List<ClientInfo> list = new ArrayList<>();
+                    if (object instanceof JSONArray) {
+                        list = ((JSONArray)object).toJavaList(ClientInfo.class);
+                    } else {
+                        list.add(((JSONObject)object).toJavaObject(ClientInfo.class));
+                    }
+
+                    list.stream()
+                            .filter(clientInfo -> Objects.equals(clientInfo.getDsName(), cfg.getName()))
+                            .collect(Collectors.toList());
+                    consumer.accept(list);
+                });
             }
 
             @Override

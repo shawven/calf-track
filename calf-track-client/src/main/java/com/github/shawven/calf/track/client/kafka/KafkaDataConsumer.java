@@ -7,6 +7,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.config.*;
+import org.springframework.kafka.listener.adapter.RecordFilterStrategy;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.messaging.handler.annotation.support.DefaultMessageHandlerMethodFactory;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * @author xw
@@ -45,35 +47,21 @@ public class KafkaDataConsumer implements DataConsumer {
     }
 
     @Override
-    public void startConsumers(String clientId, Map<String, DataSubscribeHandler> handlerMap) {
-        for (Map.Entry<String, DataSubscribeHandler> entry : handlerMap.entrySet()) {
-            DataSubscribeHandler handler = entry.getValue();
-            String topic = Const.kafkaTopicName(handler.namespace(), handler.dataSource(), handler.database());
-            registerConsumer(clientId, topic, entry.getValue());
+    public void startConsumers(String clientId, List<DataSubscribeHandler> handlers) {
+        for (DataSubscribeHandler handler : handlers) {
+            registerConsumer(clientId, handler);
         }
     }
 
-    private void registerConsumer(String clientId, String topic, DataSubscribeHandler handler){
-        MethodKafkaListenerEndpoint<?, ?> endpoint = new MethodKafkaListenerEndpoint<>();
+    private void registerConsumer(String clientId, DataSubscribeHandler handler){
+        MethodKafkaListenerEndpoint<String, String> endpoint = new MethodKafkaListenerEndpoint<>();
 
-        Consumer lambada = new Consumer() {
-            @Override
-            public void invoke(List<ConsumerRecord<String, String>> records, Acknowledgment ack) {
-                for (ConsumerRecord<String, String> record : records) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    handler.handle(record.value());
-                }
+        String topic = Const.partialToDb(handler.namespace(), handler.dataSource(), handler.database());
+        String matchKey = Const.uniqueKey(handler.namespace(), handler.dataSource(), handler.database(), handler.table());
+        endpoint.setTopics(topic);
 
-                ack.acknowledge();
-            }
-        };
-
-        Optional<Method> optional = Arrays.stream(lambada.getClass().getMethods())
-                .filter(method -> "invoke".equals(method.getName()))
+        Optional<Method> optional = Arrays.stream(InnerListener.class.getMethods())
+                .filter(method -> "onMessage".equals(method.getName()))
                 .findFirst();
         if (optional.isPresent()) {
             endpoint.setMethod(optional.get());
@@ -81,13 +69,23 @@ public class KafkaDataConsumer implements DataConsumer {
             throw new IllegalStateException();
         }
 
-        endpoint.setBean(lambada);
+        endpoint.setBean(new InnerListener(handler));
         endpoint.setMessageHandlerMethodFactory(new DefaultMessageHandlerMethodFactory());
-        endpoint.setId(clientId + "#" + counter.incrementAndGet());
+        endpoint.setId(clientId + "@" + counter.incrementAndGet());
         endpoint.setGroupId(clientId);
-        endpoint.setTopics(topic);
         endpoint.setConcurrency(concurrency);
         endpoint.setBatchListener(true);
+        endpoint.setRecordFilterStrategy(new RecordFilterStrategy<String, String>() {
+            @Override
+            public boolean filter(ConsumerRecord<String, String> record) {
+                return matchKey.equals(record.key()) || matchKey.matches(record.key());
+            }
+
+            @Override
+            public List<ConsumerRecord<String, String>> filterBatch(List<ConsumerRecord<String, String>> records) {
+                return records.stream().filter(this::filter).collect(Collectors.toList());
+            }
+        });
 
         registry.registerListenerContainer(endpoint, factory, true);
     }
@@ -98,7 +96,30 @@ public class KafkaDataConsumer implements DataConsumer {
         registry.stop();
     }
 
-    public interface Consumer {
-        void invoke(List<ConsumerRecord<String, String>> records, Acknowledgment ack);
+    static class InnerListener implements Listener {
+
+        DataSubscribeHandler handler;
+
+        public InnerListener(DataSubscribeHandler handler) {
+            this.handler = handler;
+        }
+
+        @Override
+        public void onMessage(List<ConsumerRecord<String, String>> records, Acknowledgment ack) {
+            for (ConsumerRecord<String, String> record : records) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                handler.handle(record.value());
+            }
+
+            ack.acknowledge();
+        }
+    };
+
+    public interface Listener {
+        void onMessage(List<ConsumerRecord<String, String>> records, Acknowledgment ack);
     }
 }

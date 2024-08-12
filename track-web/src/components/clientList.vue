@@ -1,7 +1,7 @@
 <template>
   <div>
     <div style="margin-bottom: 10px; margin-right: 50px; display: flex; justify-content: flex-end">
-      <el-button type="primary" size="small" @click="addClientVisible = true">
+      <el-button type="primary" size="small" @click="showCreator">
         添加应用
       </el-button>
     </div>
@@ -26,7 +26,7 @@
 <!--          <el-table-column prop="queueType" label="队列类型" align="center"></el-table-column>-->
           <el-table-column label="操作" align="center">
             <template slot-scope="scope">
-              <el-button type="warning" size="small"  v-if="!scope.row.active" @click="showEditor(scope.row)">修改</el-button>
+              <el-button type="warning" size="small" @click="showEditor(scope.row)">修改</el-button>
               <el-button type="danger" size="small" @click="deleteClient(scope.row)">删除</el-button>
             </template>
           </el-table-column>
@@ -37,10 +37,10 @@
 
     <el-dialog width="40%" :title="editorTitle" :visible.sync="addClientVisible">
       <el-form :model="client" :rules="rules" ref="ruleForm" label-width="100px">
-        <el-form-item prop="name" label="应用名称">
+        <el-form-item prop="name" label="应用名称" v-if="isCreate">
           <el-input v-model="client.name" class="auto"></el-input>
         </el-form-item>
-        <el-form-item prop="dsName" label="数据源名称">
+        <el-form-item prop="dsName" label="数据源名称" v-if="isCreate">
           <el-select v-model="client.dsName" style="width: 100%" placeholder="请选择">
             <el-option
               v-for="item in dsNames"
@@ -137,7 +137,7 @@ import {
       },
       showCreator() {
         this.addClientVisible = true
-        this.isCreate = false;
+        this.isCreate = true;
         this.client = {...this.defaultPersistDatasource}
         this.editorTitle = "添加应用";
       },

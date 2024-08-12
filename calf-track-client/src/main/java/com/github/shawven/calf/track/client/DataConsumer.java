@@ -1,6 +1,6 @@
 package com.github.shawven.calf.track.client;
 
-import java.util.Map;
+import java.util.List;
 
 /**
  * @author xw
@@ -10,7 +10,7 @@ public interface DataConsumer {
 
     String queueType();
 
-    void startConsumers(String clientId, Map<String, DataSubscribeHandler> handlerMap);
+    void startConsumers(String clientId, List<DataSubscribeHandler> handlers);
 
     void stopConsumers(String clientId);
 }

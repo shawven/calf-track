@@ -9,7 +9,6 @@ import org.apache.kafka.common.errors.TopicExistsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
-import org.springframework.kafka.KafkaException;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -44,7 +43,7 @@ public class KafkaService {
         String database = event.getDatabase();
 
         // 数据库级别的topic namespace_datasource_database
-        String topic = Const.kafkaTopicName(cfg.getNamespace(), cfg.getName(), database);
+        String topic = Const.partialToDb(cfg.getNamespace(), cfg.getName(), database);
 
         // 创建kafka队列
         createTopic(topic, 16, 1);

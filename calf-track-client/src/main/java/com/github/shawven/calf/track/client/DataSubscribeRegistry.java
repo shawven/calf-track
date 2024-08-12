@@ -114,7 +114,7 @@ public class DataSubscribeRegistry implements SmartLifecycle {
         }
         logger.info("startConsumers");
         running = true;
-        dataConsumer.startConsumers(clientId, HANDLER_MAP);
+        dataConsumer.startConsumers(clientId, new ArrayList<>(HANDLER_MAP.values()));
         logger.info("successfully startConsumers");
     }
 

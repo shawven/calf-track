@@ -26,17 +26,12 @@ public class RabbitDataPublisher implements DataPublisher {
     public void publish(BaseRows data) {
         String msg = JSON.toJSONString(data);
         try {
-            String routingKey = Const.rabbitQueueName(data.key());
-
-            sendData(routingKey, msg);
+            String routingKey = Const.partialToDb(data.getNamespace(), data.getDsName(), data.getDatabase());
+            rabbitTemplate.convertAndSend(Const.RABBIT_EVENT_EXCHANGE, routingKey, msg);
 //            logger.info("推送信息 {}", msg);
         } catch (Exception e) {
             logger.error("推送信息  " + msg + " 失败", e);
         }
-    }
-
-    private void sendData(String routingKey, String msg) {
-        rabbitTemplate.convertAndSend(Const.RABBIT_EVENT_EXCHANGE, routingKey, msg);
     }
 
 

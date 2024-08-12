@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author xw
  * @date 2023-01-05
  */
-public class DataPublisherManager implements DataPublisher {
+public class DataPublisherImpl implements DataPublisher {
 
     private final Map<String, DataPublisher> dataPublisherMap;
 
@@ -18,7 +18,7 @@ public class DataPublisherManager implements DataPublisher {
 
     private long lastPublishCount = 0;
 
-    public DataPublisherManager(Map<String, DataPublisher> dataPublisherMap) {
+    public DataPublisherImpl(Map<String, DataPublisher> dataPublisherMap) {
         this.dataPublisherMap = dataPublisherMap;
     }
 

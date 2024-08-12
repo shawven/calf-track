@@ -26,7 +26,9 @@ public abstract class BaseWorkSpace implements ElectionListener {
 
     protected final DataSourceCfg dataSourceCfg;
 
-    private final Map<String, Set<EventAction>> watchedEvents = new ConcurrentHashMap<>();
+    private final Map<String, Set<EventAction>> events = new ConcurrentHashMap<>();
+
+    private final Map<String, Map<String, Set<EventAction>>> regexEvents = new ConcurrentHashMap<>();
 
     public BaseWorkSpace(ApplicationContext applicationContext, DataSourceCfg dataSourceCfg) {
         this.applicationContext = applicationContext;
@@ -34,14 +36,30 @@ public abstract class BaseWorkSpace implements ElectionListener {
     }
 
     protected boolean filterEvent(EventAction eventAction, String database, String table) {
-        String key = database.concat("/").concat(table);
-        Set<EventAction> eventActions = watchedEvents.getOrDefault(key, Collections.emptySet());
-        return eventActions.contains(eventAction);
+        String firstKey = database.concat("/").concat(table);
+        Set<EventAction> eventActions = events.getOrDefault(firstKey, Collections.emptySet());
+        if (eventActions.contains(eventAction)) {
+            return true;
+        }
+
+        Map<String, Set<EventAction>> map = regexEvents.get(database);
+        if (map == null) {
+            return false;
+        }
+
+        for (Map.Entry<String, Set<EventAction>> entry : map.entrySet()) {
+            String key = entry.getKey();
+            if (table.matches(key)) {
+                return entry.getValue().contains(eventAction);
+            }
+        }
+
+        return false;
     }
 
     protected void updateWatchedEvents(Collection<ClientInfo> clientInfos) {
         for (ClientInfo client : clientInfos) {
-            putEventActions(getEventKey(client), client.getEventActions());
+            putEventActions(client, client.getEventActions());
 
             // 发布数据源关注事件
             logger.info("publishing dataSource watched event");
@@ -50,11 +68,14 @@ public abstract class BaseWorkSpace implements ElectionListener {
         }
     }
 
-    private String getEventKey(ClientInfo clientInfo) {
-        return clientInfo.getDbName().concat("/").concat(clientInfo.getTableName());
-    }
+    private void putEventActions(ClientInfo clientInfo, Collection<EventAction> actions) {
+        String dbName = clientInfo.getDbName();
+        String tableName = clientInfo.getTableName();
 
-    private void putEventActions(String key, Collection<EventAction> actions) {
-        watchedEvents.computeIfAbsent(key, (s) -> new HashSet<>()).addAll(actions);
+        String firstKey = tableName.concat("/").concat(clientInfo.getTableName());
+        events.computeIfAbsent(firstKey, k -> new HashSet<>()).addAll(actions);
+
+        Map<String, Set<EventAction>> map = regexEvents.computeIfAbsent(dbName, k -> new ConcurrentHashMap<>());
+        map.computeIfAbsent(tableName, k -> new HashSet<>()).addAll(actions);
     }
 }

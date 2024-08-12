@@ -26,7 +26,7 @@ public class KafkaDataPublisher implements DataPublisher {
     public void publish(BaseRows data) {
         String msg = JSON.toJSONString(data);
         try {
-            String topic = Const.kafkaTopicName(data.getNamespace(), data.getDsName(), data.getDatabase());
+            String topic = Const.partialToDb(data.getNamespace(), data.getDsName(), data.getDatabase());
             kafkaTemplate.send(topic, data.key(), msg);
 //            logger.info("推送信息 {}", msg);
         } catch (Exception e) {

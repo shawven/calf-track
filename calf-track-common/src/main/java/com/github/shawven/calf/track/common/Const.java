@@ -55,17 +55,12 @@ public class Const {
     public static final String REDIS_PREFIX = PREFIX + "::";
 
 
-    /**
-     * 事件数据队列前缀
-     */
-    private static final String EVENT_QUEUE_PREFIX = PREFIX;
-
-    public static String rabbitQueueName(String suffix) {
-        return EVENT_QUEUE_PREFIX + "_" + suffix;
+    public static String partialToDb(String namespace, String dsName, String dbName) {
+        return PREFIX + "_" + namespace + "_" + dsName + "_" + dbName;
     }
 
-    public static String kafkaTopicName(String namespace, String dsName, String dbName) {
-        return EVENT_QUEUE_PREFIX + "_" + namespace + "_" + dsName + "_" + dbName;
+    public static String partialToTable(String namespace, String dsName, String dbName, String tableName) {
+        return PREFIX + "_" + namespace + "_" + dsName + "_" + dbName  + "_" + tableName;
     }
 
     public static String uniqueKey(String namespace, String dsName, String dbName, String tableName) {

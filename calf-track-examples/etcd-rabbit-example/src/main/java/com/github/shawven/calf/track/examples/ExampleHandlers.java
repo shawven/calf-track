@@ -24,6 +24,11 @@ public class ExampleHandlers {
         logger.info("handle2 接收 rabbit 信息:" + data);
     }
 
+    /**
+     * 指定表
+     *
+     * @param data
+     */
     @DataSubscriber(
             dataSource = "mongo_local",
             database = "test",
@@ -33,22 +38,17 @@ public class ExampleHandlers {
         logger.info("handle2 接收 kafka 信息:" + data);
     }
 
+    /**
+     * 正则匹配
+     *
+     * @param data
+     */
     @DataSubscriber(
             dataSource = "mongo_local",
             database = "test",
-            table = "t_user_1",
+            table = "t_user_\\d",
             actions = {EventAction.INSERT, EventAction.UPDATE, EventAction.DELETE})
     public void handle3(String data) {
         logger.info("handle3 接收 kafka 信息:" + data);
     }
-
-    @DataSubscriber(
-            dataSource = "mongo_local",
-            database = "test",
-            table = "t_user_2",
-            actions = {EventAction.INSERT, EventAction.UPDATE, EventAction.DELETE})
-    public void handle4(String data) {
-        logger.info("handle4 接收 kafka 信息:" + data);
-    }
-
 }

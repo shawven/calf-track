@@ -2,7 +2,7 @@ package com.github.shawven.calf.track.server.autoconfig;
 
 import com.github.shawven.calf.track.common.Const;
 import com.github.shawven.calf.track.datasource.api.DataPublisher;
-import com.github.shawven.calf.track.server.publisher.DataPublisherManager;
+import com.github.shawven.calf.track.server.publisher.DataPublisherImpl;
 import com.github.shawven.calf.track.server.publisher.kafka.KafkaDataPublisher;
 import com.github.shawven.calf.track.server.publisher.kafka.KafkaService;
 import com.github.shawven.calf.track.server.publisher.rabbit.RabbitDataPublisher;
@@ -10,13 +10,10 @@ import com.github.shawven.calf.track.server.publisher.rabbit.RabbitService;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.http.client.Client;
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.KafkaAdminClient;
-import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.amqp.RabbitProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -24,7 +21,6 @@ import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
 
 import java.net.MalformedURLException;
@@ -36,8 +32,8 @@ class TrackDataPublisherAutoConfiguration {
 
     @Bean
     @Primary
-    public DataPublisherManager dataPublisherManager(Map<String, DataPublisher> dataPublisherMap){
-        return new DataPublisherManager(dataPublisherMap);
+    public DataPublisherImpl dataPublisherManager(Map<String, DataPublisher> dataPublisherMap){
+        return new DataPublisherImpl(dataPublisherMap);
     }
 
 

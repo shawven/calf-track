@@ -35,16 +35,18 @@ public class RabbitDataConsumer implements DataConsumer {
     }
 
     @Override
-    public void startConsumers(String clientId, Map<String, DataSubscribeHandler> handlerMap) {
-        for (Map.Entry<String, DataSubscribeHandler> entry : handlerMap.entrySet()) {
+    public void startConsumers(String clientId, List<DataSubscribeHandler> handlers) {
+        for (DataSubscribeHandler handler : handlers) {
             try {
-                String key = entry.getKey();
-                registerConsumer(key + "@" + clientId, Const.rabbitQueueName(key), entry.getValue());
+                String routingKey = Const.partialToDb(handler.namespace(), handler.dataSource(), handler.database());
+                String key = Const.uniqueKey(handler.namespace(), handler.dataSource(), handler.database(), handler.table());
+                registerConsumer(key + "@" + clientId, routingKey, handler);
             } catch (IOException e) {
                 logger.error("RabbitDataConsumer subscribe failed :" + e.getMessage(), e);
             }
         }
     }
+
 
     private void registerConsumer(String queue, String routingKey, DataSubscribeHandler handler) throws IOException {
         Channel channel = rabbitTemplate.getConnectionFactory().createConnection().createChannel(false);
